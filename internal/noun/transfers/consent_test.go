@@ -1,9 +1,7 @@
 package transfers_test
 
 import (
-	"os"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/kurenn/ferry-cli/internal/render"
@@ -301,78 +299,79 @@ func TestAwaitingConfirmationIsNotConsent(t *testing.T) {
 // M79 is "resume without --yes proceeds". The pair with the test above is
 // what makes it a control: resume never has consent of its own, whether the
 // step it would send is fresh or was left `awaiting_confirmation`.
-// C16, and the signal nobody thinks about: **SIGHUP at the prompt is a
-// decline.**
+// C16 at its sharpest: **an interrupt at the prompt declines even when a
+// "y" is already sitting in the buffer.**
 //
-// SIGHUP is what a closed terminal sends — an ssh session dropping, a
-// terminal window shut, a CI runner reaping a job. The human who was going
-// to answer is gone, and the only safe reading of their silence is "no".
-// Anything else means a transfer executes because a network connection
-// failed.
+// The interrupt is what a closed terminal delivers — an ssh session
+// dropping, a terminal window shut, a CI runner reaping a job. The human
+// who was going to answer is gone, and the only safe reading of their
+// silence is "no". A "y" queued on stdin is not an answer given after the
+// terminal went away; it is bytes that were already there.
 //
-// M102 is "drop SIGHUP from the declined signals", and it survived every
-// other test in this package: SIGINT is the one they all use. The signal is
-// delivered through `promptShown`, the seam that fires after the question
-// is written and before the read begins (V9), because that window is too
-// short to hit by sleeping.
-func TestSIGHUPAtThePromptDeclines(t *testing.T) {
-	for _, sig := range []struct {
-		name   string
-		number syscall.Signal
-	}{
-		{name: "SIGHUP", number: syscall.SIGHUP},
-		{name: "SIGINT", number: syscall.SIGINT},
-		{name: "SIGTERM", number: syscall.SIGTERM},
-	} {
-		t.Run(sig.name, func(t *testing.T) {
-			server, home := loggedIn(t, "execute.201.processing")
+// This row is delivered through the supplied interrupt channel rather than
+// a real signal, and both halves of that choice are deliberate:
+//
+//   - **Why it still proves the property.** The channel is the same one a
+//     real signal closes — `cli.New` hands the identical channel to
+//     `consent.Ask` whether it is closed by the handler or by a test, and
+//     the handler is proven to close it by the real-signal rows in
+//     `postsend_test.go` (AC69(a)). That the set it is installed for is
+//     the right three is pinned by `cli.TestTheSignalSetIsTheThreeTheDesignNames`
+//     (M102), which is a census and cannot race.
+//
+//   - **Why not a real signal here.** `syscall.Kill` returns when the
+//     signal is queued, not when Go's handler has run, so the buffered "y"
+//     can be read first. CI caught exactly that: a SIGTERM row sent the
+//     transfer. Dropping the "y" to remove the race deadlocks instead —
+//     the blocked read holds the pty slave open, so the harness's drain
+//     never ends (A358). The channel is the one seam that is neither racy
+//     nor deadlock-prone.
+//
+// The product race the CI failure exposed was real and is fixed: `Ask` now
+// answers from an interrupt that has already arrived before it consults
+// the read at all, so the two are no longer a coin toss.
+//
+// **This row is not the control for that fix, and measurement says so.**
+// Removing the priority select leaves this test green, 20 runs out of 20:
+// the read here is a syscall on a pty, so its goroutine has almost never
+// reached the channel by the time the select runs, and the interrupt case
+// wins without needing priority. The control is
+// `consent.TestASignalWinsOverABufferedYes`, which drives `Ask` over a
+// `strings.Reader` — a read that completes in userspace, so both cases are
+// genuinely ready and the choice is genuinely a toss. That is A345: the
+// same mutation is caught at one layer and invisible at another, and the
+// end-to-end layer is the one that cannot see it.
+func TestAnInterruptAtThePromptBeatsABufferedYes(t *testing.T) {
+	server, home := loggedIn(t, "execute.201.processing")
 
-			// A buffered "y" that the CLI would read if it got as far as
-			// reading. The signal has to beat it, and the point of the
-			// row is that it does: a queued yes is not consent given
-			// after the terminal went away.
-			stdout, stderr, exit := run(t, invocation{
-				home:    home,
-				tty:     true,
-				stdin:   "y\n",
-				signals: true,
-				promptShown: func() {
-					_ = syscall.Kill(os.Getpid(), sig.number)
-				},
-				args: []string{"transfers", "execute", "--plan", recordedPlanToken},
-			})
+	interrupted := make(chan struct{})
 
-			if got := requestsTo(server, executePath); got != 0 {
-				t.Errorf("%s at the prompt sent %d request(s), want 0. The human who was "+
-					"going to answer is gone; a transfer must not execute because a "+
-					"terminal closed.", sig.name, got)
-			}
+	merged, _, exit := run(t, invocation{
+		home:        home,
+		tty:         true,
+		stdin:       "y\n",
+		interrupted: interrupted,
+		promptShown: func() { close(interrupted) },
+		args:        []string{"transfers", "execute", "--plan", recordedPlanToken},
+	})
 
-			if exit == 0 {
-				t.Errorf("exit = 0 after %s at the prompt\n%s\n%s", sig.name, stdout, stderr)
-			}
+	if got := requestsTo(server, executePath); got != 0 {
+		t.Errorf("an interrupt at the prompt sent %d request(s), want 0. The human who "+
+			"was going to answer is gone; a transfer must not execute because a "+
+			"terminal closed.", got)
+	}
 
-			// The step's state is deliberately **not** asserted here, and
-			// the reason is a race this test cannot remove and should not
-			// pretend to.
-			//
-			// `syscall.Kill` returns as soon as the signal is queued, not
-			// when Go's handler goroutine has run. So the CLI may observe
-			// the signal before its read of the buffered "y" (the step
-			// stays `awaiting_confirmation` or becomes `declined`) or
-			// after it (consent is granted, `Begin` runs, and the step is
-			// `pending` for a send the cancelled context then aborts).
-			// Both are honest: once `Begin` has run the CLI cannot know
-			// whether bytes left, and the fixture's request count is an
-			// observation it does not have.
-			//
-			// What is deterministic is the pair above — nothing reached
-			// the server, and the exit is not a success. The *decision*
-			// that a signal at the prompt is a "no" is asserted where it
-			// is deterministic: `consent.TestASignalWinsOverABufferedYes`,
-			// which drives `Ask` with the channel already closed.
-			_ = stepOf(t, home, runs.StepExecute)
-		})
+	if exit == 0 {
+		t.Errorf("exit = 0 after an interrupt at the prompt\n%s", merged)
+	}
+
+	// Consent was never granted, so `Begin` was never reached, so the step
+	// must not claim a send. Which of `awaiting_confirmation` or `declined`
+	// it settles on depends on how far the record got, and both of them say
+	// the same thing about the money.
+	if state := stepOf(t, home, runs.StepExecute).State; state == runs.StatePending {
+		t.Errorf("step = %q after an interrupt at the prompt: the CLI recorded a send "+
+			"it could not have made, since consent was never given", state)
 	}
 }
 

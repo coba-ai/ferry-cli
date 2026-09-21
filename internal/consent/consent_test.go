@@ -237,21 +237,51 @@ func (brokenReader) Read([]byte) (int, error) { return 0, errors.New("input/outp
 // The reverse would mean a `y` buffered in the terminal by a paste, or by a
 // script that wrote ahead, could authorise a send the human then tried to
 // stop with ^C.
+// A signal that has already arrived answers the prompt, even with a "y"
+// sitting in the buffer — and it does so *every* time, not most times.
+//
+// The repetition is the test, and the reason is that the defect it guards
+// is a `select` with both cases ready. `Ask` waits on the interrupt and on
+// the answer together, and Go chooses uniformly at random among ready
+// cases, so a version without the priority check returns `granted` on a
+// fraction of runs and `declined` on the rest: the same invocation sends
+// money or does not depending on the scheduler.
+//
+// A single call is a hopeless control for that, and the numbers are worth
+// writing down because they are unintuitive. With the priority check
+// removed and `-race` on:
+//
+//   - one call per process, 2000 processes: **never** red. The reader
+//     goroutine has not been scheduled by the time the select runs, so
+//     only the interrupt is ready and the toss never happens.
+//   - 3000 calls in one process: red in 4 runs out of 5.
+//
+// So the window opens only once the runtime is warm, and a `-count=1`
+// gate would have shipped the defect. The loop below is sized so that the
+// toss cannot hide: it went red in 10 runs out of 10 with the check
+// removed, and the whole test costs well under a second.
 func TestASignalWinsOverABufferedYes(t *testing.T) {
 	t.Parallel()
 
-	got, err := consent.Ask(consent.Request{
-		TTY:         true,
-		Out:         io.Discard,
-		In:          strings.NewReader("y\n"),
-		Interrupted: closed(),
-	})
-	if err != nil {
-		t.Fatalf("Ask: %v", err)
-	}
+	const attempts = 20000
 
-	if got != consent.Declined {
-		t.Errorf("verdict = %q, want declined: a signal at the prompt is a no", got)
+	for i := range attempts {
+		got, err := consent.Ask(consent.Request{
+			TTY:         true,
+			Out:         io.Discard,
+			In:          strings.NewReader("y\n"),
+			Interrupted: closed(),
+		})
+		if err != nil {
+			t.Fatalf("Ask: %v", err)
+		}
+
+		if got != consent.Declined {
+			t.Fatalf("verdict = %q on attempt %d of %d, want declined: a signal at the "+
+				"prompt is a no, and a buffered \"y\" is bytes that were already there "+
+				"rather than an answer given after the terminal went away",
+				got, i+1, attempts)
+		}
 	}
 }
 

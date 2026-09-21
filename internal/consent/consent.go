@@ -185,6 +185,18 @@ func read(r Request) (Verdict, error) {
 		lines <- answer{line: line, err: err}
 	}()
 
+	// A signal that has already been seen answers on its own, before the
+	// read is consulted at all. Without this the two cases below can both be
+	// ready — an interrupted process with a "y" already buffered on stdin —
+	// and `select` chooses between them at random, so the same invocation
+	// declines or sends money depending on the scheduler. Money is not a
+	// coin toss: once the signal is in, the answer is no.
+	select {
+	case <-r.Interrupted:
+		return Declined, nil
+	default:
+	}
+
 	select {
 	case <-r.Interrupted:
 		// A signal while the prompt was up. Nothing was typed and nothing
