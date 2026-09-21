@@ -113,3 +113,27 @@ One further code is emitted in principle but unreachable in practice:
 This list is not a claim that every *other* code is reachable. It is
 derived by looking for each code as a literal, which finds a code with
 no emitter at all but cannot find one whose emitter is never called.
+
+## Codes that are not errors
+
+A command's `last_error.code`, which `GET /v1/commands/:id` renders, is a
+**different vocabulary from this table**, and the two share most of their
+members without being the same set. The codes below are written into
+`last_error.code` and are not in this table, because they are never the
+code of an HTTP error response — there is no status to give them.
+
+- `RECOVERY_SWEEP_FAILED` — the recovery sweep itself raised while investigating this command, so the row was put back for a later pass with the reason in `last_error.sweep_error`. Written by `Commands::RecoverySweep::ISOLATION_CODE`. It describes FERRY's own housekeeping rather than anything about the caller's request, and no response is answered for it.
+- `UPSTREAM_UNKNOWN` — FERRY sent the request and cannot prove what happened to it. Written by `Ledger::RecordUnknown` and by recovery handing a command back, always onto a `upstream_unknown` or `failed_retriable` row — states that answer a poll with the command body, never with an error. It is the *absence* of an outcome, which is why it has no status: there is nothing yet to report.
+
+Do not look these up here, and — the part that costs money — **do not read
+`last_error.code` through this table.** The two vocabularies overlap only on
+a terminal command: `failed_terminal` is written by one service, which
+stores an HTTP status alongside the code and replaces whatever the row held.
+Below the terminal states `last_error.code` is a record of what FERRY last
+saw, not a refusal, and the retriability column above says nothing about it.
+
+In particular, a `failed_terminal` command is finished whatever its
+`last_error.code` says. A code marked **yes** in `Retry identical` above
+does not make a terminal command retriable; it describes a *response*, and
+the command's `state` is what describes the command. Read
+[the state reference](states.md) for what to do with each state.
