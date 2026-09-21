@@ -11,16 +11,16 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kurenn/ferry/cli/internal/creds"
-	"github.com/kurenn/ferry/cli/internal/fixture"
-	"github.com/kurenn/ferry/cli/internal/fsx"
-	"github.com/kurenn/ferry/cli/internal/harness"
-	"github.com/kurenn/ferry/cli/internal/noun"
-	"github.com/kurenn/ferry/cli/internal/noun/auth"
-	"github.com/kurenn/ferry/cli/internal/noun/corridors"
-	"github.com/kurenn/ferry/cli/internal/noun/keys"
-	"github.com/kurenn/ferry/cli/internal/render"
-	"github.com/kurenn/ferry/cli/internal/xdg"
+	"github.com/kurenn/ferry-cli/internal/creds"
+	"github.com/kurenn/ferry-cli/internal/fixture"
+	"github.com/kurenn/ferry-cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/harness"
+	"github.com/kurenn/ferry-cli/internal/noun"
+	"github.com/kurenn/ferry-cli/internal/noun/auth"
+	"github.com/kurenn/ferry-cli/internal/noun/corridors"
+	"github.com/kurenn/ferry-cli/internal/noun/keys"
+	"github.com/kurenn/ferry-cli/internal/render"
+	"github.com/kurenn/ferry-cli/internal/xdg"
 )
 
 // The behavioural half of AC42 (check 3 of the three in `secrets_test.go`).

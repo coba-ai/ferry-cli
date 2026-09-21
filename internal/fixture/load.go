@@ -340,7 +340,7 @@ func sha256Of(raw []byte) []byte {
 	return sum[:]
 }
 
-// RecordedDir is `cli/testdata/recorded/`, located from this file rather than
+// RecordedDir is `testdata/recorded/`, located from this file rather than
 // from the working directory: `go test` runs each package in its own
 // directory, so a relative path here would mean a different place in every
 // package that consumes the fixture.
@@ -359,7 +359,7 @@ var (
 	recordedErr  error
 )
 
-// Recorded loads `cli/testdata/recorded/` once per process.
+// Recorded loads `testdata/recorded/` once per process.
 //
 // The result is shared and never mutated: a server takes its cursor with it,
 // so two tests running in parallel read the same recordings and write nothing.
@@ -367,7 +367,7 @@ func Recorded() (*Set, error) {
 	recordedOnce.Do(func() {
 		dir := RecordedDir()
 		if dir == "" {
-			recordedErr = fmt.Errorf("%w: cannot locate cli/testdata/recorded from the compiled package", ErrRecordings)
+			recordedErr = fmt.Errorf("%w: cannot locate testdata/recorded from the compiled package", ErrRecordings)
 
 			return
 		}

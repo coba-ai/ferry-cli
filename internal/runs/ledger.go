@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/kurenn/ferry/cli/internal/fsx"
-	"github.com/kurenn/ferry/cli/internal/ulid"
-	"github.com/kurenn/ferry/cli/internal/xdg"
+	"github.com/kurenn/ferry-cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/ulid"
+	"github.com/kurenn/ferry-cli/internal/xdg"
 )
 
 // FileMode is the mode a run record and its sidecar are written with.

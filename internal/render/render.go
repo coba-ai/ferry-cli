@@ -20,8 +20,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kurenn/ferry/cli/internal/api"
-	"github.com/kurenn/ferry/cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/outcome"
 )
 
 // Mode is `--output`.

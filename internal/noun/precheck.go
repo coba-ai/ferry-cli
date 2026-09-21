@@ -27,13 +27,13 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
-	"github.com/kurenn/ferry/cli/internal/api"
-	"github.com/kurenn/ferry/cli/internal/creds"
-	"github.com/kurenn/ferry/cli/internal/fsx"
-	"github.com/kurenn/ferry/cli/internal/outcome"
-	"github.com/kurenn/ferry/cli/internal/render"
-	"github.com/kurenn/ferry/cli/internal/version"
-	"github.com/kurenn/ferry/cli/internal/xdg"
+	"github.com/kurenn/ferry-cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/creds"
+	"github.com/kurenn/ferry-cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/render"
+	"github.com/kurenn/ferry-cli/internal/version"
+	"github.com/kurenn/ferry-cli/internal/xdg"
 )
 
 // Requirements is the credential class each operation needs (§1.2.1, §5.2).

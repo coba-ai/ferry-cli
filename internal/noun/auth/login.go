@@ -7,12 +7,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kurenn/ferry/cli/internal/api"
-	"github.com/kurenn/ferry/cli/internal/creds"
-	"github.com/kurenn/ferry/cli/internal/noun"
-	"github.com/kurenn/ferry/cli/internal/outcome"
-	"github.com/kurenn/ferry/cli/internal/render"
-	"github.com/kurenn/ferry/cli/internal/version"
+	"github.com/kurenn/ferry-cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/creds"
+	"github.com/kurenn/ferry-cli/internal/noun"
+	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/render"
+	"github.com/kurenn/ferry-cli/internal/version"
 )
 
 // TokenStdinFlag is the only flag that carries a token into this process.

@@ -14,7 +14,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kurenn/ferry/cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/fsx"
 )
 
 // DirMode is the mode every directory the CLI creates is given.

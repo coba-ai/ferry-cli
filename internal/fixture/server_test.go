@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry/cli/internal/api"
-	"github.com/kurenn/ferry/cli/internal/fixture"
+	"github.com/kurenn/ferry-cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/fixture"
 )
 
 // These are U3's criteria: AC29 (the loader's two-directional check and the

@@ -9,11 +9,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kurenn/ferry/cli/internal/creds"
-	"github.com/kurenn/ferry/cli/internal/fsx"
-	"github.com/kurenn/ferry/cli/internal/outcome"
-	"github.com/kurenn/ferry/cli/internal/render"
-	"github.com/kurenn/ferry/cli/internal/xdg"
+	"github.com/kurenn/ferry-cli/internal/creds"
+	"github.com/kurenn/ferry-cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/render"
+	"github.com/kurenn/ferry-cli/internal/xdg"
 )
 
 // AC43: a command whose endpoint requires a class the profile lacks exits 3

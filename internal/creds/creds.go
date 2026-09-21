@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kurenn/ferry/cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/fsx"
 )
 
 // Schema is the version written into the file.

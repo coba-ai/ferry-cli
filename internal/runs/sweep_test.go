@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry/cli/internal/fsx"
-	"github.com/kurenn/ferry/cli/internal/runs"
+	"github.com/kurenn/ferry-cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/runs"
 )
 
 // ---------------------------------------------------------------- AC82 ----

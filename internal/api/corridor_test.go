@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/kurenn/ferry/cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/api"
 )
 
 // AC26 and C11. `null` and `[]` are different answers.

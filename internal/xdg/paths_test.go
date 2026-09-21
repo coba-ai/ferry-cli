@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kurenn/ferry/cli/internal/fsx"
-	"github.com/kurenn/ferry/cli/internal/xdg"
+	"github.com/kurenn/ferry-cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/xdg"
 )
 
 // AC6: FERRY_HOME > XDG_CONFIG_HOME/XDG_STATE_HOME > ~/.config/ferry,

@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry/cli/internal/api"
-	"github.com/kurenn/ferry/cli/internal/creds"
-	"github.com/kurenn/ferry/cli/internal/fsx"
-	"github.com/kurenn/ferry/cli/internal/noun"
-	"github.com/kurenn/ferry/cli/internal/xdg"
+	"github.com/kurenn/ferry-cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/creds"
+	"github.com/kurenn/ferry-cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/noun"
+	"github.com/kurenn/ferry-cli/internal/xdg"
 )
 
 // `--login`'s store, asserted here rather than through the fixture.

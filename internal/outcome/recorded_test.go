@@ -6,7 +6,7 @@ package outcome_test
 //
 // `coverage_test.go` holds the table to `docs/api/errors.md` and
 // `docs/api/openapi.yaml`. Those are documents: they say what the API answers.
-// `cli/testdata/recorded/` is 72 scenarios captured from the real Rails app by
+// `testdata/recorded/` is 72 scenarios captured from the real Rails app by
 // driving the Rack stack, byte-stable and re-derived in CI. It says what the
 // API *did* answer.
 //
@@ -51,7 +51,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry/cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/outcome"
 	"gopkg.in/yaml.v3"
 )
 
@@ -67,7 +67,7 @@ const (
 	floorCommandBody = 9
 )
 
-const recordedDir = "cli/testdata/recorded"
+const recordedDir = "testdata/recorded"
 
 // Rows whose code no recording contains, each with the fact the scenario set
 // of PLAN §5.10 does not produce. This is the backward direction's exclusion
@@ -278,7 +278,7 @@ type recordingFile struct {
 	} `json:"interactions"`
 }
 
-// readRecordedAnswers reads every file under `cli/testdata/recorded/` and
+// readRecordedAnswers reads every file under `testdata/recorded/` and
 // returns one entry per HTTP answer.
 //
 // It raises on anything it cannot place: a file the manifest does not list, a
@@ -508,7 +508,7 @@ func readContractRoutes(t *testing.T) []contractRoute {
 	t.Helper()
 
 	var doc yaml.Node
-	if err := yaml.Unmarshal([]byte(readFile(t, "docs/api/openapi.yaml")), &doc); err != nil {
+	if err := yaml.Unmarshal([]byte(readFile(t, "contract/openapi.yaml")), &doc); err != nil {
 		t.Fatalf("parsing openapi.yaml: %v", err)
 	}
 
@@ -557,7 +557,7 @@ func readEnvelopeKeys(t *testing.T) []string {
 	t.Helper()
 
 	var doc yaml.Node
-	if err := yaml.Unmarshal([]byte(readFile(t, "docs/api/openapi.yaml")), &doc); err != nil {
+	if err := yaml.Unmarshal([]byte(readFile(t, "contract/openapi.yaml")), &doc); err != nil {
 		t.Fatalf("parsing openapi.yaml: %v", err)
 	}
 
@@ -582,7 +582,7 @@ func readCommandStates(t *testing.T) []string {
 	t.Helper()
 
 	var doc yaml.Node
-	if err := yaml.Unmarshal([]byte(readFile(t, "docs/api/openapi.yaml")), &doc); err != nil {
+	if err := yaml.Unmarshal([]byte(readFile(t, "contract/openapi.yaml")), &doc); err != nil {
 		t.Fatalf("parsing openapi.yaml: %v", err)
 	}
 

@@ -24,7 +24,7 @@ import (
 
 const (
 	ownershipFile = "OWNERSHIP"
-	planFile      = "../docs/loops/cli/PLAN.md"
+	planFile      = "docs/PLAN.md"
 
 	// Floors. Every check below is over a collection gathered by walking or
 	// parsing, and a walk that found nothing or a parse that matched nothing

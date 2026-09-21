@@ -1,0 +1,1606 @@
+openapi: 3.1.0
+
+# The machine-readable contract for the FERRY API.
+#
+# Hand-authored, because request and response shapes need judgement that no
+# generator has, but not unchecked: `spec/docs/api_docs_spec.rb` asserts the
+# paths here and the routes in `config/routes.rb` are the same set in both
+# directions, and that every error code named below exists in
+# `Ferry::Api::Errors::CATALOG`. Adding a route without documenting it, or
+# documenting one that does not exist, reddens the suite.
+#
+# For the semantics that a schema cannot express — when to retry, what a
+# state means, why you must not generate a new Idempotency-Key after a
+# timeout — read AGENTS.md. That is the document an agent should read first.
+
+info:
+  title: FERRY
+  version: "1.0.0"
+  summary: Cross-border money movement over Polygon's Open Money Stack.
+  description: |
+    Money movement is idempotent, and settled in-request when it can be.
+    `POST /v1/transfers` answers `201` with the transaction when the outcome
+    is established during the call, and `202` with a command only when it is
+    not — poll `GET /v1/commands/{id}` in that case until the command reaches
+    a terminal state.
+
+    `201` is acceptance by the upstream, not settlement: read `status` and
+    `subStatus` on the body.
+
+    Before writing a client, read `AGENTS.md`. The single most expensive
+    mistake available here is treating an ambiguous failure as a definite
+    one and re-sending with a fresh `Idempotency-Key`.
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.ferry.example
+    description: Production. An API key is bound to one environment, so the same URL serves sandbox and live.
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: transfers
+    description: Pricing and executing money movement.
+  - name: commands
+    description: The asynchronous result of a mutating request.
+  - name: corridors
+    description: Which source/destination pairs are supported.
+  - name: keys
+    description: API key administration.
+  - name: identity
+    description: Who the presented credential is.
+  - name: webhooks
+    description: FERRY's inbound edge from the upstream. Not called by API consumers.
+
+paths:
+  /v1/me:
+    get:
+      tags: [identity]
+      operationId: getMe
+      summary: Describe the presented credential
+      description: Returns the principal, its environment and its granted scopes.
+      responses:
+        "200":
+          description: The principal.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Principal" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/api_keys:
+    get:
+      tags: [keys]
+      operationId: listApiKeys
+      summary: List API keys
+      description: Requires the `read` scope and a personal access token. API keys cannot manage API keys.
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: environment
+          in: query
+          required: false
+          schema: { type: string, enum: [sandbox, live] }
+          description: Filter to one environment. An environment outside your organization is `VALIDATION_FAILED`.
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [active, all], default: all }
+      responses:
+        "200":
+          description: A page of API keys.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/List" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [keys]
+      operationId: createApiKey
+      summary: Create an API key
+      description: |
+        Requires the `keys:manage` scope and a personal access token. On a
+        live environment, creating a key with `money:execute` or
+        `destinations:manage` additionally requires step-up and is answered
+        `STEP_UP_REQUIRED`.
+
+        The token is returned **once**, in this response, and stored only as a
+        digest. There is no endpoint that will return it again.
+      responses:
+        "201":
+          description: The created key, including its one-time token.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiKey" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /v1/api_keys/{id}:
+    get:
+      tags: [keys]
+      operationId: getApiKey
+      summary: Fetch one API key
+      description: Requires the `read` scope and a personal access token. Never returns the token.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The key.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiKey" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/api_keys/{id}/revoke:
+    post:
+      tags: [keys]
+      operationId: revokeApiKey
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RevokeApiKeyRequest" }
+      summary: Revoke an API key
+      description: |
+        Requires the `keys:manage` scope and a personal access token. Takes
+        effect immediately and is idempotent.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The revoked key.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiKey" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/corridors:
+    get:
+      tags: [corridors]
+      operationId: listCorridors
+      summary: List corridors
+      description: |
+        Requires the `read` scope. A corridor may be published and still not
+        quotable; `quotable` and `availability_stated` answer different
+        questions and `null` is meaningful in the second. See the schema.
+      responses:
+        "200":
+          description: All corridors.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: "list" }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Corridor" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/corridors/{id}:
+    get:
+      tags: [corridors]
+      operationId: getCorridor
+      summary: Fetch one corridor
+      description: Requires the `read` scope.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The corridor.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Corridor" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/transfers/simulate:
+    post:
+      tags: [transfers]
+      operationId: simulateTransfer
+      summary: Price a transfer without moving money
+      description: |
+        Requires the `money:simulate` scope and an `Idempotency-Key` header —
+        simulating creates a quote upstream, so it is a mutating call even
+        though it moves no money.
+
+        Returns a quote and a plan. The plan pins the priced terms, so a later
+        execute either happens on those terms or is refused with
+        `PLAN_CHANGED`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TransferRequest" }
+      responses:
+        "201":
+          description: |
+            The quote and its plan. `plan.token` appears only on this fresh
+            answer — it is never stored, so a replay returns the quote without
+            it and adds a `meta.remediation` sentence explaining that.
+          headers:
+            Idempotency-Replayed: { $ref: "#/components/headers/IdempotencyReplayed" }
+            Idempotency-Key: { $ref: "#/components/headers/IdempotencyKeyEcho" }
+            Ferry-Command-Id: { $ref: "#/components/headers/FerryCommandId" }
+            Ferry-Environment: { $ref: "#/components/headers/FerryEnvironment" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Simulation" }
+        "202":
+          description: FERRY could not establish the outcome in-request. Poll the command.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Command" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: |
+            `WRONG_TOKEN_CLASS` for a personal access token, or
+            `INSUFFICIENT_SCOPE` without `money:simulate`.
+
+            Not a spend-policy refusal: policy is evaluated when a plan is
+            executed, not when it is priced, so `POLICY_*` cannot arrive here.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409":
+          description: |
+            `IDEMPOTENCY_KEY_IN_PROGRESS` (retry after `Retry-After`),
+            `IDEMPOTENCY_KEY_REUSED`, `IDEMPOTENCY_KEY_REPLAY_EXPIRED`, or
+            `COMMAND_UNRESOLVED` when replaying a command an operator holds.
+          headers:
+            Ferry-Command-Id: { $ref: "#/components/headers/FerryCommandId" }
+            Retry-After: { $ref: "#/components/headers/RetryAfter" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "502":
+          description: "`UPSTREAM_CONTRACT_VIOLATION`, replayed from a terminally rejected quote command."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
+  /v1/transfers:
+    post:
+      tags: [transfers]
+      operationId: executeTransfer
+      summary: Execute a transfer
+      description: |
+        Requires the `money:execute` scope and an `Idempotency-Key` header.
+
+        The body is the plan token from `simulate`, not the transfer fields
+        again — the terms were pinned when the plan was issued.
+
+        **`201` is the normal answer**, carrying the completed transaction:
+        FERRY calls the upstream during your request and hands you the result.
+        `202` is the exception, meaning the outcome could not be established
+        in-request; only then is there anything to poll. Branch on the status
+        rather than assuming this endpoint is asynchronous.
+
+        Re-sending the same `Idempotency-Key` can never execute twice — on
+        replay you get the original outcome and the `Idempotency-Replayed`
+        header.
+
+        **Read the decision table in AGENTS.md before handling any failure
+        from this endpoint.** Generating a fresh key because a request looked
+        like it failed is how money moves twice.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExecuteRequest" }
+      responses:
+        "201":
+          description: |
+            Executed. The body is the completed transaction, projected. This
+            is also the replay answer for a command that already completed, in
+            which case `Idempotency-Replayed: true` is set.
+          headers:
+            Idempotency-Replayed: { $ref: "#/components/headers/IdempotencyReplayed" }
+            Idempotency-Key: { $ref: "#/components/headers/IdempotencyKeyEcho" }
+            Ferry-Command-Id: { $ref: "#/components/headers/FerryCommandId" }
+            Ferry-Environment: { $ref: "#/components/headers/FerryEnvironment" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Transaction" }
+        "202":
+          description: |
+            The outcome could not be established during the request. The body
+            is a command; poll it. Money may or may not have moved — do not
+            re-send with a new key.
+          headers:
+            Idempotency-Replayed: { $ref: "#/components/headers/IdempotencyReplayed" }
+            Idempotency-Key: { $ref: "#/components/headers/IdempotencyKeyEcho" }
+            Ferry-Command-Id: { $ref: "#/components/headers/FerryCommandId" }
+            Ferry-Environment: { $ref: "#/components/headers/FerryEnvironment" }
+            Retry-After: { $ref: "#/components/headers/RetryAfter" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Command" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: |
+            `POLICY_*`, `EXECUTION_SUSPENDED` or `DESTINATION_TOO_NEW` —
+            nothing was sent, but the plan is **consumed**, so recovering
+            means simulating again rather than retrying. Also
+            `PLAN_KEY_MISMATCH` when the plan belongs to another credential,
+            and `WRONG_TOKEN_CLASS` / `INSUFFICIENT_SCOPE`.
+
+            Never `STEP_UP_REQUIRED`: step-up is refused when a key is minted,
+            not when a transfer is attempted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404":
+          description: "`PLAN_NOT_FOUND`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: |
+            `IDEMPOTENCY_KEY_IN_PROGRESS` — the same key is in flight; wait and poll.
+            `IDEMPOTENCY_KEY_REUSED` — the key was used with a different body.
+            `PLAN_ALREADY_USED` / `PLAN_CHANGED` — re-simulate.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "410":
+          description: "`PLAN_EXPIRED`. Plans last five minutes at most. Re-simulate."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "502":
+          description: |
+            `UPSTREAM_CONTRACT_VIOLATION`. Raised before anything is sent, when
+            the quote behind your plan is unusable — there is no command and
+            nothing moved. Re-simulate.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
+  /v1/commands/{id}:
+    get:
+      tags: [commands]
+      operationId: getCommand
+      summary: Poll a command
+      description: |
+        Requires the `read` scope. The result of a mutating request that could
+        not be settled in-request. Poll until `state` is terminal, waiting
+        `retry_after_seconds` between reads.
+
+        See `states.md` for every state and what to do in it. The one that
+        matters: `upstream_unknown` does not mean failure, and re-sending on
+        it risks moving the money twice.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The command.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Command" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /oms/webhooks/{locator}:
+    post:
+      tags: [webhooks]
+      operationId: ingestWebhook
+      summary: Inbound delivery from the upstream
+      description: |
+        FERRY's own inbound edge, listed for completeness. API consumers do
+        not call this. Unauthenticated in the bearer-token sense and
+        authenticated by HMAC signature over the raw body.
+
+        A delivery only ever causes FERRY to re-read the upstream; it is never
+        believed on its own contents.
+      security: []
+      parameters:
+        - name: locator
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Accepted, or accepted and quarantined. The body is not meaningful to the sender.
+        "401":
+          description: "`WEBHOOK_SIGNATURE_INVALID`."
+        "403":
+          description: "`WEBHOOK_MODE_MISMATCH` — the endpoint's mode is not the environment's."
+        "404":
+          description: "`WEBHOOK_ENDPOINT_UNKNOWN`."
+        "410":
+          description: "`WEBHOOK_ENDPOINT_RETIRED`."
+        "413":
+          description: "`WEBHOOK_BODY_TOO_LARGE`."
+        "429":
+          description: "`RATE_LIMITED`, per address, per locator or globally."
+        "503":
+          description: |
+            `WEBHOOK_INGRESS_UNVERIFIED`. This deployment has not acknowledged
+            the delivery contract, so every delivery is refused until
+            `FERRY_WEBHOOK_CONTRACT_ACKNOWLEDGED` is set.
+
+  /v1/{path}:
+    get:
+      tags: [identity]
+      operationId: catchAll
+      summary: Unknown path under /v1
+      description: |
+        Any unmatched path under `/v1` answers the standard error envelope
+        with `NOT_FOUND`, rather than an HTML 404. A client never has to parse
+        anything but JSON from this API.
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        `Authorization: Bearer <token>`. An API key is bound to exactly one
+        environment, so no environment parameter is ever passed. Tokens are
+        stored as digests and shown once at creation.
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+      description: |
+        A prefixed, sortable public identifier. The exception is a corridor,
+        whose id is the composite spelling `walletCrypto->bankUs` and must be
+        URL-encoded.
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema: { type: string }
+      description: Opaque, signed. Pass back what the previous page returned; do not construct one.
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Page size. Out-of-range values are clamped, not refused.
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string }
+      description: |
+        Required on every mutating money request. Re-sending the same key can
+        never execute twice; the same key with a *different* body is refused
+        with `IDEMPOTENCY_KEY_REUSED`.
+
+  headers:
+    FerryCommandId:
+      description: |
+        The command behind this answer. Present on every response that has one
+        — including the `409` in-progress, `503 UPSTREAM_BUSY` and `403` policy
+        refusals, whose envelopes carry no `poll` link, so this is how the
+        command is found.
+      schema: { type: string }
+    FerryEnvironment:
+      description: "`sandbox` or `live` — which environment the key resolved to. Worth asserting before moving money."
+      schema: { type: string, enum: [sandbox, live] }
+    IdempotencyKeyEcho:
+      description: The `Idempotency-Key` from the request, echoed on every money response.
+      schema: { type: string }
+    IdempotencyReplayed:
+      description: Present and `true` when this is a stored outcome rather than a fresh one.
+      schema: { type: boolean }
+    RetryAfter:
+      description: Seconds to wait. Matches `retry_after_seconds` in the body.
+      schema: { type: integer }
+    WwwAuthenticate:
+      description: "`Bearer realm=\"ferry\"`, plus `error=\"invalid_token\"` for anything other than a missing token."
+      schema: { type: string }
+
+  responses:
+    Unauthorized:
+      headers:
+        WWW-Authenticate: { $ref: "#/components/headers/WwwAuthenticate" }
+      description: No credential, or one that is invalid, expired, revoked, suspended or disabled.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      headers:
+        Ferry-Command-Id: { $ref: "#/components/headers/FerryCommandId" }
+      description: Authenticated but not permitted — `INSUFFICIENT_SCOPE`, `ROLE_FORBIDDEN`, `STEP_UP_REQUIRED`, or a `POLICY_*` refusal.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: |
+        `NOT_FOUND`. Deliberately does not distinguish "no such row" from "not
+        yours" — the distinction is itself a disclosure.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    BadRequest:
+      description: |
+        `VALIDATION_FAILED` (including any unrecognised key, which is refused
+        rather than ignored), `MALFORMED_JSON`, `CURSOR_INVALID`, or
+        `IDEMPOTENCY_KEY_REQUIRED` / `IDEMPOTENCY_KEY_INVALID` on a money
+        request.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unprocessable:
+      description: |
+        A corridor refusal, raised while pricing: `CORRIDOR_UNSUPPORTED`,
+        `CORRIDOR_NOT_EXECUTABLE`, `DESTINATION_NOT_EXECUTABLE`,
+        `INSTRUMENT_INVALID`, `AMOUNT_INVALID`, `QUOTE_REJECTED`. Only
+        `simulate` raises these — `execute` validates nothing but the plan
+        token.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      headers:
+        Retry-After: { $ref: "#/components/headers/RetryAfter" }
+      description: "`RATE_LIMITED`. Back off for `retry_after_seconds` and resend the same request, with the same `Idempotency-Key` if it was a mutating one."
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unavailable:
+      headers:
+        Ferry-Command-Id: { $ref: "#/components/headers/FerryCommandId" }
+        Retry-After: { $ref: "#/components/headers/RetryAfter" }
+      description: |
+        Nothing was executed, but which code you get matters.
+
+        `UPSTREAM_BUSY` is the live transient failure and the one you will
+        actually see: if a `Ferry-Command-Id` is present, FERRY has scheduled
+        its own retry and resending the same key returns `202` while it works.
+        `UPSTREAM_NOT_CONFIGURED` means no upstream credential is attached.
+        `SERVICE_UNAVAILABLE` means a dependency FERRY needs is down.
+        `UPSTREAM_UNAVAILABLE` is never emitted live — you see it only
+        replayed from a command that recovery gave up on, and the plan behind
+        it is already spent, so recovering means re-simulating.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    CreateApiKeyRequest:
+      type: object
+      description: |
+        Requires a personal access token with `keys:manage`; an API key cannot
+        mint keys, which is what keeps revocation meaningful. An unrecognised
+        key is refused with `400 VALIDATION_FAILED`, not ignored.
+      required: [name, environment, scopes]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Yours, for telling keys apart. Not interpreted.
+        environment:
+          type: string
+          enum: [sandbox, live]
+          description: A key belongs to exactly one environment for its whole life.
+        scopes:
+          type: array
+          description: |
+            `keys:manage` is absent on purpose — it is control-plane only and
+            cannot be granted to an API key.
+
+            `money:execute` and `destinations:manage` cannot currently be
+            granted on `live` at all: the request is refused with
+            `STEP_UP_REQUIRED` until step-up authentication ships.
+          items:
+            type: string
+            enum: [read, "compliance:read", write, "destinations:manage", "money:simulate", "money:execute"]
+        expires_at:
+          type: string
+          format: date-time
+          description: |
+            RFC 3339. Optional — omitted, the key lasts the maximum its
+            environment and scopes allow: 365 days on sandbox, 90 on live, 30
+            on live with a money-moving scope. A time in the past, or beyond
+            that ceiling, is `400 VALIDATION_FAILED` with the offending field
+            named in `details.fields`.
+
+    RevokeApiKeyRequest:
+      type: object
+      description: |
+        Revocation is idempotent — revoking an already-revoked key succeeds.
+        Any plan tokens the key issued are voided with it.
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          description: Recorded on the audit event. Optional.
+
+    List:
+      type: object
+      description: |
+        The paginated envelope. Only `GET /v1/api_keys` paginates today;
+        `GET /v1/corridors` returns the whole catalogue as `{object, data}`
+        with no cursor fields, because it is a fixed table rather than a
+        growing collection.
+
+        `data` is therefore `ApiKey` and nothing else: one endpoint uses this
+        envelope, and it renders its page through the same serializer the
+        single-key responses use.
+      required: [object, data, has_more, next_cursor, limit]
+      properties:
+        object: { type: string, const: "list" }
+        data: { type: array, items: { $ref: "#/components/schemas/ApiKey" } }
+        has_more: { type: boolean }
+        next_cursor:
+          type: [string, "null"]
+          description: Pass back as `cursor`. Null on the last page.
+        limit: { type: integer, description: The effective page size, clamped to 1..100. }
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          description: |
+            All seven keys are always present, `null` where they do not apply,
+            so a client never has to test for key presence as well as value.
+          required: [code, message, retriable, retry_after_seconds, details, request_id, docs_url]
+          properties:
+            code:
+              type: string
+              description: Branch on this. Never on the status, which is shared, or the message, which is prose.
+            message: { type: string }
+            retriable:
+              type: boolean
+              description: |
+                Whether the byte-identical request could ever succeed. Not
+                advice about waiting — many `false` codes are still safe to
+                start over from as a new request, and say so.
+            retry_after_seconds: { type: [integer, "null"] }
+            details: { $ref: "#/components/schemas/ErrorDetails" }
+            request_id: { type: [string, "null"] }
+            docs_url: { type: string }
+
+    ErrorDetails:
+      type: [object, "null"]
+      description: |
+        The context a code's value *is*, or `null` for a code that has
+        none: `Errors.envelope` renders whatever a handler passed only
+        for a catalogue entry marked `elaborate: true`, and drops it
+        for every other code.
+
+        **This object is open, and the properties below are a
+        vocabulary rather than a shape.** Which keys are present
+        follows from `code`, and three codes emit more than one shape
+        under the one code — `VALIDATION_FAILED` answers `{fields}`
+        from a model validation and `{reason}` (with `field`, and
+        sometimes `one_of`) from the corridor builder; `AMOUNT_INVALID`
+        has three; `UPSTREAM_CONTRACT_VIOLATION` and `QUOTE_REJECTED`
+        have three each, chosen by which way the upstream answer was
+        unusable. `WRONG_TOKEN_CLASS` carries `{accepted}` from the
+        endpoint's own gate and `null` from a policy. So no closed set
+        is true of every answer, and declaring one would make adding a
+        diagnostic key — which is the whole purpose of this object — a
+        breaking change for every generated client.
+
+        **Branch on `code`. Never on which keys are present**, and read
+        only the keys that code's row in `errors.md` describes: a key
+        named here appears on the codes named in its description and
+        on no others.
+
+        Every property below has a writer in this repository, and
+        `spec/docs/api_docs_spec.rb` holds the two sets equal in both
+        directions, so a key FERRY starts sending is a red spec rather
+        than an undocumented field.
+      additionalProperties: true
+      properties:
+        accepted:
+          type: array
+          items: { type: string }
+          description: "`WRONG_TOKEN_CLASS` from an endpoint's credential-class gate: the classes it does serve."
+        allowed:
+          type: array
+          items: { type: string }
+          description: "`INSTRUMENT_INVALID`: the vocabulary this arm admits, beside the `value` that was sent."
+        asset:
+          type: string
+          description: "`POLICY_UNPRICED_ASSET`: the asset with no USD basis to count against a spend policy."
+        attempts:
+          type: integer
+          description: "`UPSTREAM_UNAVAILABLE` and `QUOTE_REJECTED` from recovery: how many attempts the command had made."
+        body_class:
+          type: string
+          description: "`UPSTREAM_CONTRACT_VIOLATION` and `QUOTE_REJECTED`: how the upstream answer was classified. Selects which of the other upstream keys are present."
+        bucket:
+          type: string
+          description: "`RATE_LIMITED`: which budget was spent."
+        command_id:
+          type: string
+          description: |
+            The command to poll. Merged in for every replay refusal
+            (`IDEMPOTENCY_KEY_REUSED`, `IDEMPOTENCY_KEY_IN_PROGRESS`,
+            `IDEMPOTENCY_KEY_REPLAY_EXPIRED`, `COMMAND_UNRESOLVED`) and
+            carried on `UPSTREAM_BUSY`. The same value as the
+            `Ferry-Command-Id` header where both are present.
+        destination:
+          type: string
+          description: "`CORRIDOR_UNSUPPORTED`: the destination arm that was sent."
+        diff:
+          type: array
+          items: { type: string }
+          description: "`PLAN_CHANGED`: the material quote fields that no longer match the plan."
+        environment:
+          type: string
+          description: "`ENVIRONMENT_DISABLED` (which environment), and `ROLE_FORBIDDEN`/`STEP_UP_REQUIRED` (the environment the refused key would have been minted against)."
+        expired_at:
+          type: string
+          format: date-time
+          description: "`TOKEN_EXPIRED`, `PLAN_EXPIRED` and `IDEMPOTENCY_KEY_REPLAY_EXPIRED`: when the thing that expired did."
+        field:
+          type: string
+          description: "`VALIDATION_FAILED` (corridor arm), `UPSTREAM_CONTRACT_VIOLATION`: the one field at fault. Singular — `fields` is the model-validation shape."
+        fields:
+          type: array
+          description: "`VALIDATION_FAILED` from a model validation or a controller check."
+          items:
+            type: object
+            required: [field, code, message]
+            additionalProperties: false
+            properties:
+              field: { type: string }
+              code: { type: string }
+              message: { type: string }
+        key_policy_error:
+          type: string
+          description: "`POLICY_INVALID`: why this credential's spend policy could not be read."
+        limit:
+          type: [integer, string]
+          description: |
+            The ceiling that was exceeded. An integer on `RATE_LIMITED`
+            (requests per period); a decimal **string** on the
+            `POLICY_MAX_*` codes, because money is never a float.
+        maximum:
+          type: string
+          description: "`AMOUNT_INVALID` on a cash corridor: the largest amount it will quote, as a decimal string."
+        mismatch:
+          type: array
+          items: { type: string }
+          description: "`UPSTREAM_CONTRACT_VIOLATION`/`QUOTE_REJECTED` with `body_class: quote_uncorrelated`: the correlation fields that did not match."
+        multiple:
+          type: string
+          description: "`AMOUNT_INVALID` on a cash corridor: the multiple the amount must be, as a decimal string."
+        one_of:
+          type: array
+          items: { type: string }
+          description: "`VALIDATION_FAILED` where an arm requires exactly one of several fields: the field paths it would have accepted."
+        period:
+          type: integer
+          description: "`RATE_LIMITED`: the bucket's window, in seconds."
+        remaining:
+          type: string
+          description: "The `POLICY_MAX_*` codes: what is left of the tightest cap, as a decimal string. `0` on a per-transaction cap, where nothing of this transfer has been spent."
+        reason:
+          type: string
+          description: |
+            Why, within one code, as a machine token — the key that
+            separates two outcomes a status and a code cannot.
+            **`IDEMPOTENCY_KEY_REUSED` is `different_request` or
+            `different_credential`, and they are not the same
+            decision**: the first says this key already answered other
+            bytes, the second says the key is another credential's.
+            Also on `IDEMPOTENCY_KEY_INVALID` (`too_long`,
+            `non_printable`), `EXECUTION_SUSPENDED`,
+            `SERVICE_UNAVAILABLE` (`counter_unavailable`),
+            `STEP_UP_REQUIRED`, `CORRIDOR_NOT_EXECUTABLE`,
+            `DESTINATION_NOT_EXECUTABLE`, `AMOUNT_INVALID`,
+            `VALIDATION_FAILED` and the upstream-answer codes.
+        remediation:
+          type: string
+          description: "`IDEMPOTENCY_KEY_REPLAY_EXPIRED` and `COMMAND_UNRESOLVED`: what to do instead, in prose. Never parse it."
+        required_roles:
+          type: array
+          items: { type: string }
+          description: "`ROLE_FORBIDDEN`: the membership roles this operation admits."
+        required_scopes:
+          type: array
+          items: { type: string }
+          description: "`INSUFFICIENT_SCOPE`: the scopes the operation asked for."
+        required_side:
+          type: string
+          description: "`AMOUNT_INVALID` with `reason: wrong_side`: the side this corridor prices on."
+        retriable:
+          type: boolean
+          description: |
+            On the two replay refusals that carry a `state`
+            (`IDEMPOTENCY_KEY_IN_PROGRESS`, `COMMAND_UNRESOLVED`), and
+            it repeats the envelope's own `retriable`. Read the
+            envelope's; this one is here because the replay decision
+            computes it and the two must agree.
+        revoked_at:
+          type: string
+          format: date-time
+          description: "`TOKEN_REVOKED`: when."
+        scopes:
+          type: array
+          items: { type: string }
+          description: "`ROLE_FORBIDDEN` and `STEP_UP_REQUIRED` on a live mint: the money-moving scopes that made the request privileged."
+        since:
+          type: [string, "null"]
+          format: date-time
+          description: "`EXECUTION_SUSPENDED`: when execution was suspended. Null where the policy recorded no time."
+        source:
+          type: string
+          description: "`CORRIDOR_UNSUPPORTED`: the source arm that was sent."
+        state:
+          type: string
+          description: |
+            The command's state at the moment of the refusal, on
+            `IDEMPOTENCY_KEY_IN_PROGRESS`,
+            `IDEMPOTENCY_KEY_REPLAY_EXPIRED`, `COMMAND_UNRESOLVED` and
+            `UPSTREAM_BUSY`. Same vocabulary as `Command.state`.
+        supportedDestinations:
+          type: array
+          items: { type: string }
+          description: "`CORRIDOR_UNSUPPORTED`: the destination arms this source can be quoted to. Camel-case because it echoes the published corridor table."
+        upstream_code:
+          type: string
+          description: "`UPSTREAM_CONTRACT_VIOLATION`/`QUOTE_REJECTED`: the upstream's own error code, for an operator. Not FERRY's vocabulary; do not branch on it."
+        upstream_error:
+          type: string
+          description: "`UPSTREAM_CONTRACT_VIOLATION`/`QUOTE_REJECTED`: the upstream's own error name. Not FERRY's vocabulary; do not branch on it."
+        usable_after:
+          type: string
+          format: date-time
+          description: "`DESTINATION_TOO_NEW`: when this destination becomes usable."
+        value:
+          type: string
+          description: "`INSTRUMENT_INVALID`: the value that was rejected, beside the `allowed` vocabulary."
+
+    Command:
+      type: object
+      description: The asynchronous result of a mutating request.
+      required: [object, id, operation, state, poll]
+      properties:
+        object: { type: string, const: "command" }
+        id: { type: string }
+        operation: { type: string, examples: ["transfers_execute"] }
+        state:
+          type: string
+          enum: [reserved, inflight, upstream_unknown, completed, failed_retriable, failed_terminal, needs_operator]
+          description: Terminal states are `completed` and `failed_terminal`. See states.md.
+        created_at: { type: [string, "null"], format: date-time }
+        state_changed_at: { type: [string, "null"], format: date-time }
+        attempts: { type: integer }
+        poll: { type: string, description: Path to poll for this command. }
+        retry_after_seconds: { type: [integer, "null"], description: How long to wait before polling again. }
+        result:
+          type: [object, "null"]
+          description: Populated once `completed`, and only while still replayable.
+          required: [status, body]
+          additionalProperties: false
+          properties:
+            status: { type: integer }
+            body:
+              description: |
+                **Two shapes, chosen by `operation`, and the difference decides
+                whether money moved.** A `transfers_execute` command stores the
+                projected `Transaction` it was answered with; a
+                `transfers_simulate` command stores the simulate `201` it
+                answered, which is a `StoredSimulation` and **carries no
+                `status`**. Read `object` — `"transaction"` or `"simulation"` —
+                or read `operation` on this command; do not read `status` and
+                treat its absence as a value, because an absent
+                `result.body.status` on a simulate is normal and on an execute
+                means the body is not one this contract describes.
+
+                `StoredSimulation` is the `201` minus the two properties a
+                stored body cannot carry: `plan.token`, which is minted once
+                and never stored, and `meta`, which the replay renderer adds.
+                So polling a completed simulate gets you the quote and the plan
+                id and never a usable plan token.
+              oneOf:
+                - $ref: "#/components/schemas/Transaction"
+                - $ref: "#/components/schemas/StoredSimulation"
+              discriminator:
+                propertyName: object
+                mapping:
+                  transaction: "#/components/schemas/Transaction"
+                  simulation: "#/components/schemas/StoredSimulation"
+        last_error:
+          type: [object, "null"]
+          description: |
+            Why the last attempt did not succeed, for the record and for an
+            operator — **never for a decision**. A response body's claim about
+            what happened upstream is not evidence that it happened; `state`
+            and `contradiction` are what a client acts on.
+
+            Present on any state that has failed at least once, not only the
+            terminal ones, so a `failed_retriable` or `upstream_unknown` row
+            carries one too.
+
+            **Open, and the properties below are a vocabulary rather than a
+            shape.** Seven writers produce this document and three of them
+            *merge* onto whatever the row already held, so the keys present at
+            any moment are the union of the writers that have run — a
+            combination no closed set could enumerate. `code` is the one key
+            every writer sets.
+          required: [code]
+          additionalProperties: true
+          properties:
+            code:
+              type: string
+              description: |
+                Always present. Usually an `errors.md` code, and on a
+                `failed_terminal` row it is the code the stored answer replays
+                as. Two are not catalogued and reach no envelope:
+                `UPSTREAM_UNKNOWN`, written when the outcome of a send is not
+                known, and `RECOVERY_SWEEP_FAILED`, written when the sweep
+                itself raised.
+            details: { $ref: "#/components/schemas/ErrorDetails" }
+            category:
+              type: string
+              description: How the upstream answer was classified when the attempt was recorded.
+            body_class:
+              type: string
+              description: Which shape the upstream body was, where there was one.
+            error_name:
+              type: string
+              description: The upstream's own error name. Not FERRY's vocabulary.
+            error_code:
+              type: string
+              description: The upstream's own error code. Not FERRY's vocabulary.
+            rejection_shaped:
+              type: boolean
+              description: Whether an upstream `4xx` carried a body shaped like a rejection.
+            retry_after_seconds:
+              type: integer
+              description: The interval the upstream asked for on the attempt this records.
+            correlation_mismatch:
+              type: array
+              items: { type: string }
+              description: The correlation fields that did not match, where a body was found and was somebody else's.
+            open_reads:
+              type: array
+              items: { type: string, format: date-time }
+              description: When recovery read upstream and the answer was still open. Accumulates across recovery runs.
+            transport_error:
+              type: string
+              description: The transport failure, where the request never reached the upstream.
+            quote_resend:
+              type: string
+              description: Why recovery handed a quote resend back rather than resolving it.
+            quote_read:
+              type: string
+              description: What recovery's read of the quote step concluded before handing back.
+            reason:
+              type: string
+              description: Why the command was escalated, on a `COMMAND_UNRESOLVED` row.
+            sweep_error:
+              type: string
+              description: The exception the recovery sweep raised, truncated. Never on a terminal row.
+        contradiction:
+          type: [object, "null"]
+          description: |
+            Non-null means FERRY found a transaction it cannot account for
+            against this command. **Stop and escalate whatever `state` says** —
+            including `failed_terminal`, whose usual "no money moved" reading
+            does not hold here. On a live environment this has already frozen
+            execution.
+
+            Unlike `last_error`, this is a whole document with one writer, and
+            the contract states all of it. It is written once and never
+            overwritten: the first contradiction is the one that dates the
+            incident.
+          required: [kind, transaction_oms_id, detected_by, prior_state, detected_at]
+          additionalProperties: false
+          properties:
+            kind:
+              type: string
+              enum: [second_transaction, never_sent_contradicted, multiple_transactions]
+              description: |
+                What was believed, against what is true. `second_transaction`:
+                this command completed with one transaction and another exists
+                for the same quote. `never_sent_contradicted`: the adapter
+                reported that nothing left the host, and a transaction exists
+                anyway. `multiple_transactions`: one send, so at most one
+                transaction, and recovery's search found more.
+            transaction_oms_id:
+              type: string
+              description: The conflicting transaction. On `multiple_transactions` this is the first of them; see `transaction_oms_ids`.
+            detected_by:
+              type: string
+              description: Which path found it.
+            prior_state:
+              type: string
+              description: |
+                The command's state when the contradiction was recorded. The
+                state itself does not move — these are columns, not a
+                transition — so without this an investigator cannot tell a
+                contradicted completion from a contradicted `failed_terminal`,
+                and those call for opposite responses.
+            detected_at:
+              type: string
+              format: date-time
+              description: When. Microsecond precision.
+            transaction_oms_ids:
+              type: array
+              items: { type: string }
+              description: |
+                **`multiple_transactions` only.** Every transaction recovery's
+                search named, merged in after the contradiction was recorded.
+                Absent on the other two kinds, which name one transaction.
+        transaction_id: { type: [string, "null"] }
+        idempotency_key: { type: [string, "null"] }
+
+    Principal:
+      type: object
+      description: |
+        Who the presented credential is (`GET /v1/me`).
+
+        **Two shapes, one schema, and what separates them is the credential
+        class rather than a flag.** An API key is bound to one environment and
+        to nobody: `environment` is populated, `user` and `role` are `null`,
+        and `environments` is `[]` — that list answers "which environments may
+        this principal address", and for a key the answer is the one already
+        in `environment`. A personal access token spans its organization's
+        environments and names a member: `environment` is `null`, `user` and
+        `role` are populated, and `environments` lists them, `sandbox` before
+        `live`. Branch on `kind`, never on which field happens to be set.
+
+        Everything here is something the caller already holds or could infer
+        from what it holds. `token_prefix` and `token_last4` are the twelve
+        display characters of the token; the other 31 are not in the database
+        to render, so no response carries them.
+      required: [object, kind, organization, environment, credential, user, role, environments]
+      additionalProperties: false
+      properties:
+        object: { type: string, const: "principal" }
+        kind:
+          type: string
+          enum: [api_key, personal_access_token]
+          description: The credential class. Every conditional field below follows from it.
+        organization:
+          type: object
+          required: [id, name, slug, status]
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            name: { type: string }
+            slug: { type: string }
+            status: { type: string }
+        environment:
+          type: [object, "null"]
+          description: The one environment an API key is bound to. `null` on a personal access token — read `environments` instead.
+          required: [id, kind, status]
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            kind: { type: string, enum: [sandbox, live] }
+            status: { type: string }
+        credential:
+          type: object
+          description: The presented credential itself. There is no `token` here, on any response.
+          required: [id, name, token_prefix, token_last4, scopes, expires_at, last_used_at]
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            name: { type: string }
+            token_prefix: { type: string }
+            token_last4: { type: string }
+            scopes: { type: array, items: { type: string } }
+            expires_at: { type: string, format: date-time, description: Every credential has one; neither class may be minted without a ceiling. }
+            last_used_at: { type: [string, "null"], format: date-time, description: Null until the credential's first authenticated request. }
+        user:
+          type: [object, "null"]
+          description: The person a personal access token acts as. `null` for an API key, which was minted by a person but does not act as one.
+          required: [id, email]
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            email: { type: string }
+        role:
+          type: [string, "null"]
+          description: The role the token holder's membership carries. `null` for an API key.
+        environments:
+          type: array
+          description: Every environment this principal may address. Empty for an API key.
+          items:
+            type: object
+            required: [id, kind, status]
+            additionalProperties: false
+            properties:
+              id: { type: string }
+              kind: { type: string, enum: [sandbox, live] }
+              status: { type: string }
+
+    ApiKey:
+      type: object
+      description: |
+        An API key, as the four key endpoints render it — the `201` of
+        `POST /v1/api_keys`, the `200` of `GET /v1/api_keys/{id}` and of
+        `POST /v1/api_keys/{id}/revoke`, and each element of `data` on
+        `GET /v1/api_keys`.
+
+        **`token` is create-only and is the only conditional property here.**
+        The plaintext exists once, in the result the create service returns,
+        and the create action is the only caller that hands it to the
+        serializer; everywhere else the row holds a digest and there is
+        nothing to render. So `token` is present on the `201` of
+        `POST /v1/api_keys` and on no other response, which is why it is not
+        in `required`. Capture it there or lose it.
+      required:
+        - object
+        - id
+        - name
+        - environment
+        - scopes
+        - token_prefix
+        - token_last4
+        - expires_at
+        - created_at
+        - last_used_at
+        - revoked_at
+        - revoked_reason
+        - created_by
+      additionalProperties: false
+      properties:
+        object: { type: string, const: "api_key" }
+        id: { type: string }
+        name: { type: string, description: Yours, for telling keys apart. Not interpreted. }
+        environment:
+          type: object
+          description: The one environment this key is bound to for its whole life. Narrower than `Principal.environment`, which also carries `status`.
+          required: [id, kind]
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            kind: { type: string, enum: [sandbox, live] }
+        scopes: { type: array, items: { type: string } }
+        token_prefix: { type: string, description: The first eight characters of the token. Stored on purpose, so a key can be identified from a log line. }
+        token_last4: { type: string }
+        expires_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        last_used_at: { type: [string, "null"], format: date-time, description: Null until the key's first authenticated request. }
+        revoked_at: { type: [string, "null"], format: date-time, description: Null while the key is active. }
+        revoked_reason: { type: [string, "null"] }
+        created_by: { type: string, description: The user that minted this key, as a prefixed id. Derived from the foreign key, so listing a page of keys loads no users and can leak no email. }
+        token:
+          type: string
+          description: |
+            The plaintext, returned **once**, on the `201` of
+            `POST /v1/api_keys`. Absent from every other response — there is
+            no endpoint that will return it again.
+
+    Simulation:
+      type: object
+      description: |
+        The `201` of `POST /v1/transfers/simulate`: the price FERRY was quoted
+        and the plan that pins it.
+
+        **Two properties are conditional, and a body never carries both.**
+        `plan.token` is on the fresh `201` only: it is minted with the plan,
+        handed out once and never stored, so a replay has nothing to re-hand.
+        `meta.remediation` is on the replayed `201` only, and is the sentence
+        saying so. `Idempotency-Replayed: true` is how you tell which answer
+        you are holding without inspecting either field.
+
+        Everything else is identical across the two, deliberately: `meta` sits
+        outside `quote` and `plan`, so a client reading either of those reads
+        the same keys on a fresh answer and on a replay.
+      required: [object, command_id, quote, plan]
+      additionalProperties: false
+      properties:
+        object: { type: string, const: "simulation" }
+        command_id: { type: string, description: The simulate command behind this answer — the same value as the `Ferry-Command-Id` header. }
+        quote: { $ref: "#/components/schemas/Quote" }
+        plan:
+          type: object
+          required: [object, id, expires_at]
+          additionalProperties: false
+          properties:
+            object: { type: string, const: "plan" }
+            id: { type: string }
+            expires_at:
+              type: string
+              format: date-time
+              description: The earlier of the quote's own expiry and five minutes from issue. Revoking the key that issued the plan also voids it.
+            token:
+              type: string
+              description: |
+                The single-use bearer authorization `POST /v1/transfers` takes
+                as `plan_token`. **Fresh `201` only** — never stored, so
+                re-sending the same `Idempotency-Key` answers without it, and
+                will do so forever. Capture it when you get it.
+              examples: ["ferry_plan_grpQ0HNkX8mJ2vB7cD4fG6hK9lN1pQ3rS5tU7wY0zA2"]
+        meta:
+          type: object
+          description: |
+            **Replayed `201` only.** Absent from the fresh answer.
+          required: [remediation]
+          additionalProperties: false
+          properties:
+            remediation:
+              type: string
+              description: Why this answer carries no `plan.token`, and what to do instead — which is to simulate again under a new key, not to retry this one.
+
+    StoredSimulation:
+      type: object
+      description: |
+        The `transfers_simulate` arm of `Command.result.body`: what
+        `Commands::Ledger::CompleteQuote` wrote when the command completed,
+        which is what a poll of that command hands back.
+
+        **It is `Simulation` minus the two conditional properties, and that is
+        a property of the ledger rather than a coincidence.** `plan.token` is
+        minted with the plan and never stored, so there is nothing to store;
+        `meta` is added by the replay renderer at render time, so a stored
+        body has never been through it. A caller polling a completed simulate
+        therefore gets the quote and the plan's identity and **never a usable
+        plan token** — the token was handed out once, on the fresh `201`, and
+        a poll is not that answer.
+
+        No `status`, which is the difference that decides an execute's outcome
+        from a simulate's: see `Command.result.body`.
+      required: [object, command_id, quote, plan]
+      additionalProperties: false
+      properties:
+        object: { type: string, const: "simulation" }
+        command_id: { type: string, description: The simulate command this body belongs to. }
+        quote: { $ref: "#/components/schemas/Quote" }
+        plan:
+          type: object
+          required: [object, id, expires_at]
+          additionalProperties: false
+          properties:
+            object: { type: string, const: "plan" }
+            id: { type: string }
+            expires_at: { type: string, format: date-time }
+
+    Quote:
+      type: object
+      description: |
+        What FERRY keeps of an upstream quote, and the whole of what it will
+        ever hand back: the body is an **allowlist projection**, not the
+        upstream document. Both parties by name, either side's display name
+        and free-text memo, an unregistered sender's blockchain address, a
+        bank name and an account's last four, and a cash payout's pickup code
+        are all dropped on the way in — FERRY does not store them, so no
+        response can carry them and no later contract version can widen this
+        without someone deciding to.
+
+        **Nothing here is required, and that is the projection's behaviour
+        rather than an omission.** Absence is preserved exactly: a path the
+        upstream body did not carry is absent here too, so a bank destination
+        has no `cashLocationId` rather than a null one. Treat every property
+        as optional and every absent one as "the upstream did not say".
+      additionalProperties: false
+      properties:
+        createdAt: { type: string, format: date-time }
+        customerId: { type: string }
+        destination:
+          type: object
+          additionalProperties: false
+          properties:
+            asset: { type: string }
+            cashLocationId: { type: string, description: "`cash` sides only." }
+            category: { type: string, examples: ["crypto", "fiatAccount", "cash"] }
+            id: { type: [string, "null"] }
+            network: { type: [string, "null"] }
+            type: { type: string, examples: ["walletCrypto", "bankUs"] }
+        expiresAt: { type: string, format: date-time }
+        id: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Your own key/values, as sent on the transfer request and echoed by the upstream.
+        object: { type: string, const: "quote" }
+        pricing:
+          type: object
+          additionalProperties: false
+          properties:
+            destination:
+              type: object
+              additionalProperties: false
+              properties:
+                amountGross: { type: string }
+                amountNet: { type: string }
+                asset: { type: string }
+                feesDeducted:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    developer: { type: string }
+                    gas: { type: string }
+                    oms: { type: string }
+                    total: { type: string }
+            effectiveRate: { type: string }
+            exchangeRate: { type: string }
+            fixedAmountSide: { type: string, enum: [source, destination], description: Which side the caller fixed the amount on. }
+            pair: { type: string, examples: ["usdc/usd"] }
+            source:
+              type: object
+              additionalProperties: false
+              properties:
+                amountGross: { type: string }
+                amountNet: { type: string }
+                asset: { type: string }
+                feesDeducted:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    developer: { type: string }
+                    gas: { type: string }
+                    oms: { type: string }
+                    total: { type: string }
+            sponsorGas: { type: boolean }
+            sponsorGasCost: { type: string }
+        source:
+          type: object
+          additionalProperties: false
+          properties:
+            asset: { type: string }
+            cashLocationId: { type: string, description: "`cash` sides only." }
+            category: { type: string, examples: ["crypto", "fiatAccount", "cash"] }
+            id: { type: [string, "null"] }
+            network: { type: [string, "null"] }
+            type: { type: string, examples: ["walletCrypto", "bankUs"] }
+        sourceToDestination: { type: string, description: The corridor composite the two sides resolve to. }
+        status: { type: string, examples: ["open"] }
+
+    Transaction:
+      type: object
+      description: |
+        The completed transfer, as the `201` of `POST /v1/transfers` renders
+        it. An allowlist projection for `Quote`'s reasons and by the same
+        rule — the parties, the instrument detail, the operator-facing
+        recovery prose and the source transaction hash are not kept.
+
+        **Read `status` and `subStatus`.** `201` is the upstream accepting the
+        transfer, not settling it: the lifecycle runs `processing`,
+        `awaitingAction`, `completed`, `failed`, and a transfer can still fail
+        after acceptance. FERRY does not re-read that snapshot or deliver a
+        webhook today, so a later failure is not something this API will tell
+        you about.
+
+        **Nothing here is required**, for the reason `Quote` gives: absence is
+        preserved, so `error` is absent on a transfer that has not failed
+        rather than null.
+      additionalProperties: false
+      properties:
+        createdAt: { type: string, format: date-time }
+        customerId: { type: string }
+        destination:
+          type: object
+          additionalProperties: false
+          properties:
+            asset: { type: string }
+            cashLocationId: { type: string, description: "`cash` sides only." }
+            category: { type: string, examples: ["crypto", "fiatAccount", "cash"] }
+            id: { type: [string, "null"] }
+            network: { type: [string, "null"] }
+            type: { type: string, examples: ["walletCrypto", "bankUs"] }
+        error:
+          type: object
+          additionalProperties: false
+          description: Present once a transfer has failed. The operator prose and the recovery instructions are withheld; `code` is the machine-readable half and the one to branch on.
+          properties:
+            code: { type: string }
+            occurredAt: { type: string, format: date-time }
+            recoverable: { type: boolean }
+        estimatedArrival: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        id: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Your own key/values, as sent on the transfer request and echoed by the upstream.
+        object: { type: string, const: "transaction" }
+        precursor:
+          type: object
+          additionalProperties: false
+          description: What created this transaction — for a transfer executed from a plan, the quote it was priced on.
+          properties:
+            id: { type: string }
+            type: { type: string, examples: ["quote"] }
+        pricing:
+          type: object
+          additionalProperties: false
+          properties:
+            destination:
+              type: object
+              additionalProperties: false
+              properties:
+                amountGross: { type: string }
+                amountNet: { type: string }
+                asset: { type: string }
+                feesDeducted:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    developer: { type: string }
+                    gas: { type: string }
+                    oms: { type: string }
+                    total: { type: string }
+            effectiveRate: { type: string }
+            exchangeRate: { type: string }
+            fixedAmountSide: { type: string, enum: [source, destination], description: Which side the caller fixed the amount on. }
+            pair: { type: string, examples: ["usdc/usd"] }
+            source:
+              type: object
+              additionalProperties: false
+              properties:
+                amountGross: { type: string }
+                amountNet: { type: string }
+                asset: { type: string }
+                feesDeducted:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    developer: { type: string }
+                    gas: { type: string }
+                    oms: { type: string }
+                    total: { type: string }
+            sponsorGas: { type: boolean }
+            sponsorGasCost: { type: string }
+        source:
+          type: object
+          additionalProperties: false
+          properties:
+            asset: { type: string }
+            cashLocationId: { type: string, description: "`cash` sides only." }
+            category: { type: string, examples: ["crypto", "fiatAccount", "cash"] }
+            id: { type: [string, "null"] }
+            network: { type: [string, "null"] }
+            type: { type: string, examples: ["walletCrypto", "bankUs"] }
+        sourceToDestination: { type: string, description: The corridor composite the two sides resolve to. }
+        status: { type: string, examples: ["processing", "completed", "failed"] }
+        subStatus: { type: string, description: The status-scoped sub-state, always present alongside a status. }
+        updatedAt: { type: string, format: date-time }
+
+    ExecuteRequest:
+      type: object
+      description: |
+        Execution takes the plan, not the transfer fields. The terms were
+        pinned when the plan was issued; re-sending them would invite a
+        disagreement between what you asked for and what you were quoted.
+      required: [plan_token]
+      properties:
+        plan_token:
+          type: string
+          description: |
+            From `plan.token` on the simulate response. Single-use, and
+            returned only once. Format is `ferry_plan_` followed by 43
+            alphanumeric characters.
+          examples: ["ferry_plan_grpQ0HNkX8mJ2vB7cD4fG6hK9lN1pQ3rS5tU7wY0zA2"]
+
+    TransferRequest:
+      type: object
+      description: |
+        These six keys are the whole request surface. An unrecognised
+        top-level key is **refused**, not ignored — a caller who misspells
+        `sponsor_gas` and is answered `201` has been told FERRY honoured
+        something it dropped.
+      required: [customer_id, source, destination, amount]
+      additionalProperties: false
+      properties:
+        customer_id: { type: string }
+        source: { $ref: "#/components/schemas/TransferSide" }
+        destination: { $ref: "#/components/schemas/TransferSide" }
+        amount:
+          type: object
+          required: [side, value]
+          properties:
+            side:
+              type: string
+              enum: [source, destination]
+              description: |
+                Which side the value is fixed on. `source` means send exactly
+                this much; `destination` means deliver exactly this much.
+            value:
+              type: string
+              description: A decimal string. Never a float — binary floating point cannot represent money exactly.
+              examples: ["100.00"]
+        sponsor_gas:
+          type: boolean
+          description: Ask FERRY to sponsor the network gas cost. Sent upstream as `sponsorGas`.
+        metadata:
+          type: object
+          description: Your own key/values. Forwarded to the upstream and returned on the quote.
+          additionalProperties: true
+
+    TransferSide:
+      type: object
+      description: |
+        Which fields are required depends on `type`, which selects the arm:
+
+        - `bankUs`, `bankIban`, `bankCanada` require `account_holder`;
+          `bankIban` does not take `network`.
+        - `walletFiat` and `card` do not take `network`.
+        - `walletExternal` requires exactly one of `id` or
+          `blockchain_address`.
+        - `cash` requires one of `cash_location_id` or
+          `cash_location_reference`.
+
+        An unrecognised key on a side is refused, not ignored, the same way an
+        unrecognised top-level key is. `required` below lists only what every
+        arm shares.
+      required: [type]
+      additionalProperties: false
+      properties:
+        type: { type: string, examples: ["walletCrypto", "bankUs"] }
+        id: { type: string }
+        asset: { type: string, examples: ["usdc", "usd"] }
+        network: { type: string, examples: ["polygon", "ach"] }
+        account_holder: { type: string, examples: ["customer"] }
+        blockchain_address: { type: string, description: "`walletExternal` only, as an alternative to `id`." }
+        cash_location_id: { type: string, description: "`cash` only." }
+        cash_location_reference: { type: string, description: "`cash` only." }
+
+    Corridor:
+      type: object
+      properties:
+        object: { type: string }
+        id: { type: string }
+        composite: { type: string }
+        source: { $ref: "#/components/schemas/CorridorSide" }
+        destination: { $ref: "#/components/schemas/CorridorSide" }
+        availability_stated:
+          type: boolean
+          description: |
+            Currently `false` on every corridor. A network appearing in the
+            vocabulary is not a promise the destination accepts it.
+        amount:
+          type: object
+          description: The amount rules this corridor is quoted under.
+          properties:
+            side:
+              type: string
+              enum: [either, destination]
+              description: Which `amount.side` values this corridor accepts on a request.
+            multiple: { type: [string, "null"], description: Amounts must be a multiple of this, when set. }
+            maximum: { type: [string, "null"], description: Per-transfer ceiling, when the corridor states one. }
+        quotable:
+          type: boolean
+          description: Whether FERRY will price this corridor. A published corridor may still be false here.
+        reason: { type: [string, "null"], description: Why `quotable` is false. }
+
+    CorridorSide:
+      type: object
+      properties:
+        type: { type: string }
+        category: { type: string }
+        allowed_assets:
+          type: [array, "null"]
+          items: { type: string }
+          description: |
+            `null` and `[]` are different answers and are written through
+            unchanged. `null` is "the contract enumerates nothing here"; `[]`
+            is "it enumerates an empty set". Do not coerce one to the other.
+        allowed_networks:
+          type: [array, "null"]
+          items: { type: string }
+          description: As `allowed_assets` — `null` is not `[]`.

@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/kurenn/ferry/cli/internal/api"
-	"github.com/kurenn/ferry/cli/internal/creds"
+	"github.com/kurenn/ferry-cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/creds"
 )
 
 // The two `kind` values `GET /v1/me` answers with

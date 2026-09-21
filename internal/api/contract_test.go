@@ -11,8 +11,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/kurenn/ferry/cli/internal/api"
-	"github.com/kurenn/ferry/cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/outcome"
 )
 
 // AC25 and §5.12's first pin: structure from `openapi.yaml`.
@@ -36,12 +36,12 @@ type openapi struct {
 func loadContract(t *testing.T) openapi {
 	t.Helper()
 
-	root, err := filepath.Abs(filepath.Join("..", "..", ".."))
+	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatalf("resolving the repository root: %v", err)
 	}
 
-	b, err := os.ReadFile(filepath.Join(root, "docs/api/openapi.yaml"))
+	b, err := os.ReadFile(filepath.Join(root, "contract/openapi.yaml"))
 	if err != nil {
 		t.Fatalf("reading openapi.yaml: %v", err)
 	}
@@ -450,12 +450,12 @@ func TestMetaHeadersEqualTheContract(t *testing.T) {
 func rawContract(t *testing.T) string {
 	t.Helper()
 
-	root, err := filepath.Abs(filepath.Join("..", "..", ".."))
+	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatalf("resolving the repository root: %v", err)
 	}
 
-	b, err := os.ReadFile(filepath.Join(root, "docs/api/openapi.yaml"))
+	b, err := os.ReadFile(filepath.Join(root, "contract/openapi.yaml"))
 	if err != nil {
 		t.Fatalf("reading openapi.yaml: %v", err)
 	}

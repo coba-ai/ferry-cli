@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/kurenn/ferry/cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/api"
 )
 
 // AC18. The six headers, and the one that must not be read as a number when it

@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kurenn/ferry/cli/internal/creds"
-	"github.com/kurenn/ferry/cli/internal/noun"
-	"github.com/kurenn/ferry/cli/internal/outcome"
-	"github.com/kurenn/ferry/cli/internal/render"
+	"github.com/kurenn/ferry-cli/internal/creds"
+	"github.com/kurenn/ferry-cli/internal/noun"
+	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/render"
 )
 
 // whoamiCommand is AC36's first half.

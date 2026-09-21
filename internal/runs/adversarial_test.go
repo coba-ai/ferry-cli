@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry/cli/internal/fsx"
-	"github.com/kurenn/ferry/cli/internal/runs"
-	"github.com/kurenn/ferry/cli/internal/ulid"
+	"github.com/kurenn/ferry-cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/runs"
+	"github.com/kurenn/ferry-cli/internal/ulid"
 )
 
 // This file attacks the one claim the package exists to make (C1): for every

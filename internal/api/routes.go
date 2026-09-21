@@ -11,7 +11,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/kurenn/ferry/cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/outcome"
 )
 
 // Route is one operation, pinned to `openapi.yaml`.

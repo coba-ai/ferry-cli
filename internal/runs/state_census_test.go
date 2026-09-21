@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry/cli/internal/runs"
+	"github.com/kurenn/ferry-cli/internal/runs"
 )
 
 // This file makes runs.AllStates a census rather than a list.

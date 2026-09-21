@@ -26,6 +26,16 @@ units:
       - go.sum
       - OWNERSHIP
       - ownership_test.go
+      - contract_test.go
+      # A400 split the CLI into its own repository. contract/ is the vendored
+      # copy of the API's openapi.yaml and errors.md that the pins in
+      # internal/api and internal/outcome read, and docs/PLAN.md is this
+      # plan, which moved with the code. They are repository scaffolding, so
+      # they sit with the rest of it.
+      - contract/
+      - docs/
+      - .github/
+      - README.md
       - internal/version/
       - internal/ulid/
       - internal/xdg/

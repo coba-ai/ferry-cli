@@ -1,4 +1,4 @@
-module github.com/kurenn/ferry/cli
+module github.com/kurenn/ferry-cli
 
 go 1.24.0
 

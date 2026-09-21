@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry/cli/internal/fixture"
+	"github.com/kurenn/ferry-cli/internal/fixture"
 )
 
 // Every negative control in this package is a *corruption of the committed
@@ -24,9 +24,9 @@ import (
 // a file edited, a file added, a digest left behind, an expectation weakened —
 // so the control's subject is the real risk rather than a model of it.
 
-// copyRecordings is a byte copy of `cli/testdata/recorded/` into a temporary
+// copyRecordings is a byte copy of `testdata/recorded/` into a temporary
 // directory. The original is never opened for writing anywhere in this
-// package; `git diff --exit-code cli/testdata/recorded` (A306) is part of the
+// package; `git diff --exit-code testdata/recorded` (A306) is part of the
 // gate.
 func copyRecordings(t *testing.T) string {
 	t.Helper()

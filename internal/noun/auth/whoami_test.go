@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry/cli/internal/creds"
-	"github.com/kurenn/ferry/cli/internal/fixture"
-	"github.com/kurenn/ferry/cli/internal/render"
+	"github.com/kurenn/ferry-cli/internal/creds"
+	"github.com/kurenn/ferry-cli/internal/fixture"
+	"github.com/kurenn/ferry-cli/internal/render"
 )
 
 // ---------------------------------------------------------------------------

@@ -45,8 +45,8 @@ var (
 func repoRoot(t *testing.T) string {
 	t.Helper()
 
-	// This file lives at cli/internal/outcome/.
-	root, err := filepath.Abs(filepath.Join("..", "..", ".."))
+	// This file lives at internal/outcome/.
+	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatalf("resolving the repository root: %v", err)
 	}
@@ -72,7 +72,7 @@ func readCatalogue(t *testing.T) map[string]catalogueEntry {
 	entries := map[string]catalogueEntry{}
 	inTable := false
 
-	for i, line := range strings.Split(readFile(t, "docs/api/errors.md"), "\n") {
+	for i, line := range strings.Split(readFile(t, "contract/errors.md"), "\n") {
 		switch {
 		case strings.HasPrefix(line, "| Code | HTTP |"):
 			inTable = true
@@ -142,7 +142,7 @@ func readNeverEmitted(t *testing.T) []string {
 		in    bool
 	)
 
-	for _, line := range strings.Split(readFile(t, "docs/api/errors.md"), "\n") {
+	for _, line := range strings.Split(readFile(t, "contract/errors.md"), "\n") {
 		if strings.HasPrefix(line, "## ") {
 			in = strings.TrimSpace(line) == "## Codes you will not see"
 
@@ -177,7 +177,7 @@ func readWebhookOnlyCodes(t *testing.T, catalogue map[string]catalogueEntry) []s
 	t.Helper()
 
 	var doc yaml.Node
-	if err := yaml.Unmarshal([]byte(readFile(t, "docs/api/openapi.yaml")), &doc); err != nil {
+	if err := yaml.Unmarshal([]byte(readFile(t, "contract/openapi.yaml")), &doc); err != nil {
 		t.Fatalf("parsing openapi.yaml: %v", err)
 	}
 

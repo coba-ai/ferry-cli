@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry/cli/internal/creds"
-	"github.com/kurenn/ferry/cli/internal/fsx"
+	"github.com/kurenn/ferry-cli/internal/creds"
+	"github.com/kurenn/ferry-cli/internal/fsx"
 )
 
 const (

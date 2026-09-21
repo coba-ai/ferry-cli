@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/kurenn/ferry/cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/api"
 )
 
 // Corridor writes one corridor.

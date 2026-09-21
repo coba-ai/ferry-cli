@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry/cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/outcome"
 )
 
 // AC74 and CRITIQUE B4. The terminal rule is selected by the command body's

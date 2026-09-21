@@ -4,7 +4,7 @@ import (
 	"net/http/httptrace"
 	"sync/atomic"
 
-	"github.com/kurenn/ferry/cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/outcome"
 )
 
 // writeWatch records whether any of the request left this host.

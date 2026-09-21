@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/kurenn/ferry/cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/outcome"
 )
 
 // ErrEnvelopeShape is returned when a body is JSON but is not the seven-key

@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry/cli/internal/api"
-	"github.com/kurenn/ferry/cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/outcome"
 )
 
 // The tests in this package drive a stdlib `httptest.Server` rather than

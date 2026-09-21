@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kurenn/ferry/cli/internal/outcome"
+	"github.com/kurenn/ferry-cli/internal/outcome"
 )
 
 // ErrUsage is a request this CLI will not send: an operation it does not know,

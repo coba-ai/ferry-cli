@@ -1,5 +1,5 @@
 // Package fixture serves FERRY's recorded interactions (U0,
-// `cli/testdata/recorded/`) to the CLI's Go tests.
+// `testdata/recorded/`) to the CLI's Go tests.
 //
 // It is the only place a Go test meets a FERRY response body, and C13 is the
 // reason it exists: every body it serves came out of the real Rack app, was
@@ -11,7 +11,7 @@
 // lesson the API will not honour — and the units downstream are the ones that
 // move money.
 //
-// Nothing in this package writes to `cli/testdata/recorded/`. It is U0's, and
+// Nothing in this package writes to `testdata/recorded/`. It is U0's, and
 // the `test` job fails on `git diff --exit-code` over it (A306).
 package fixture
 
@@ -44,7 +44,7 @@ var Axes = []string{
 	"body_equals",
 }
 
-// Manifest is `cli/testdata/recorded/MANIFEST.json`.
+// Manifest is `testdata/recorded/MANIFEST.json`.
 type Manifest struct {
 	Scenarios   []ManifestEntry `json:"scenarios"`
 	Unreachable []Unreachable   `json:"unreachable"`

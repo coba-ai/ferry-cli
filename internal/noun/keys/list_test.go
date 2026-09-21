@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry/cli/internal/fixture"
-	"github.com/kurenn/ferry/cli/internal/noun/keys"
+	"github.com/kurenn/ferry-cli/internal/fixture"
+	"github.com/kurenn/ferry-cli/internal/noun/keys"
 )
 
 // ---------------------------------------------------------------------------

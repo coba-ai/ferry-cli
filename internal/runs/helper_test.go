@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry/cli/internal/runs"
+	"github.com/kurenn/ferry-cli/internal/runs"
 )
 
 // AC12 and AC90 are two-process claims: a lock that is only ever tested
