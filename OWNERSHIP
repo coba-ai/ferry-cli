@@ -34,8 +34,6 @@ units:
       # they sit with the rest of it.
       - contract/
       - docs/
-      - .github/
-      - README.md
       - internal/version/
       - internal/ulid/
       - internal/xdg/
@@ -83,6 +81,10 @@ units:
       - .goreleaser.yaml
       - e2e/
       - README.md
+      # A400: the workflow arrives with the split rather than with U6,
+      # for the reason A315 gave — a CI job that lands after the code it
+      # checks has not checked it. U6 extends it with goreleaser.
+      - .github/
 
   U7:
     description: Adversarial matrix, audit, documentation
