@@ -1,0 +1,94 @@
+# The machine-readable form of PLAN §4.1.
+#
+# Every file under cli/ matches exactly one prefix here, and every prefix
+# names a unit of §4.1. cli/ownership_test.go (AC84) enforces both in every
+# `go test ./...`, so a file that belongs to nobody fails the wave that added
+# it rather than U7's audit five waves later.
+#
+# Paths are relative to cli/. A trailing slash owns everything beneath it; a
+# path without one is exactly that file. Prefixes must not overlap: "exactly
+# one" is the property, because two owners is the same coordination failure as
+# none.
+#
+# Adding a prefix is an amendment (§11.1) unless you are the unit §4.1 gives
+# the path to.
+
+units:
+  U0:
+    description: Recorded interactions (Ruby)
+    paths:
+      - testdata/recorded/
+
+  U1:
+    description: Go module, local state, harness, ownership lint
+    paths:
+      - go.mod
+      - go.sum
+      - OWNERSHIP
+      - ownership_test.go
+      - internal/version/
+      - internal/ulid/
+      - internal/xdg/
+      - internal/creds/
+      - internal/runs/
+      - internal/fsx/
+      - internal/harness/
+
+  U2:
+    description: API client and decision table
+    paths:
+      - internal/api/
+      - internal/outcome/
+
+  U3:
+    description: Fixture server
+    paths:
+      - internal/fixture/
+
+  U4:
+    description: Auth, keys, corridors, rendering, pre-check
+    paths:
+      - internal/render/
+      - internal/noun/auth/
+      - internal/noun/keys/
+      - internal/noun/corridors/
+      - internal/noun/precheck.go
+      - internal/noun/precheck_test.go
+
+  U5:
+    description: Money path, polling, runs, consent, root
+    paths:
+      - cmd/ferry/main.go
+      - internal/cli/
+      - internal/poll/
+      - internal/noun/transfers/
+      - internal/noun/commandq/
+      - internal/noun/runs/
+      - internal/consent/
+      - internal/fault/
+
+  U6:
+    description: CI, e2e, release
+    paths:
+      - .goreleaser.yaml
+      - e2e/
+      - README.md
+
+  U7:
+    description: Adversarial matrix, audit, documentation
+    paths:
+      - internal/adversarial_test.go
+
+  # U8 owns only Ruby files, outside cli/. It is listed so the test can check
+  # the unit names here against §4.1 in both directions.
+  U8:
+    description: Contract schemas (Ruby) — owns no path under cli/
+    paths: []
+
+# Paths under cli/ that are not source and belong to no unit. Each needs a
+# reason: an ignore list without one is how a file quietly stops being owned.
+ignored:
+  - path: dist/
+    reason: goreleaser's build output (cli/.goreleaser.yaml, U6); gitignored, never committed.
+  - path: ferry
+    reason: the binary a local `go build` drops in the module root; gitignored.
