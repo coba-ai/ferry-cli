@@ -2,12 +2,15 @@ package api_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/kurenn/ferry/cli/internal/api"
+	"github.com/kurenn/ferry/cli/internal/outcome"
 )
 
 // AC86: the Go structs for `Principal`, `ApiKey`, `Simulation`, `Quote` and
@@ -49,6 +52,14 @@ const maxSchemaDepth = 12
 // each name that is itself an object, its own tree. A leaf has no properties.
 type propertyTree struct {
 	props map[string]propertyTree
+	// arms is non-nil for a `oneOf` node, and is then the whole of the node:
+	// the discriminator's value and the tree of the schema that value
+	// selects. A union has no properties of its own, so a tree has `props`
+	// or `arms` and never both — the arms are alternatives, and merging them
+	// into one property set would describe a body no answer ever is.
+	arms map[string]propertyTree
+	// discriminator is the property the arms are chosen by (`object`, here).
+	discriminator string
 }
 
 func (n propertyTree) names() []string {
@@ -62,12 +73,28 @@ func (n propertyTree) names() []string {
 	return out
 }
 
+func (n propertyTree) armNames() []string {
+	out := make([]string, 0, len(n.arms))
+	for name := range n.arms {
+		out = append(out, name)
+	}
+
+	sort.Strings(out)
+
+	return out
+}
+
 // paths counts every property path in the tree, at every depth. This is what
-// the floors are asserted against.
+// the floors are asserted against. A union contributes its arms' paths and
+// nothing of its own, because it has nothing of its own.
 func (n propertyTree) paths() int {
 	total := len(n.props)
 	for _, child := range n.props {
 		total += child.paths()
+	}
+
+	for _, arm := range n.arms {
+		total += arm.paths()
 	}
 
 	return total
@@ -127,18 +154,26 @@ func (o openapi) schemaTree(where string, schema map[string]any, depth int) prop
 
 	schema = o.resolveRef(where, schema, 0)
 
-	// A composed schema is a shape this reader does not understand, and the
-	// way it would fail is the dangerous one: `{allOf: [...]}` carries no
-	// `properties` of its own, so it would read as a leaf and compare equal
-	// to any Go scalar, with every property underneath it unbound and
-	// nothing saying so. The document composes nothing today; if it starts,
-	// this must be taught to resolve it rather than pass.
-	for _, keyword := range []string{"allOf", "anyOf", "oneOf", "not"} {
+	// A composed schema carries no `properties` of its own, so read as-is it
+	// would be a leaf and would compare equal to any Go scalar, with every
+	// property underneath it unbound and nothing saying so. That is the
+	// dangerous failure, and it is why these are fatal rather than skipped.
+	//
+	// `oneOf` is the one this reader now resolves — A393 expressed
+	// `Command.result.body` as a discriminated union — and it resolves it
+	// into arms rather than into a merged property set, because a union's
+	// arms are alternatives and a merge would document a body that no
+	// answer is.
+	for _, keyword := range []string{"allOf", "anyOf", "not"} {
 		if _, ok := schema[keyword]; ok {
 			o.t.Fatalf("openapi.yaml: %s uses %s, which this reader does not resolve; "+
 				"read as-is it would be a leaf, and every property under it would be unpinned",
 				where, keyword)
 		}
+	}
+
+	if _, ok := schema["oneOf"]; ok {
+		return o.unionTree(where, schema, depth)
 	}
 
 	raw, ok := schema["properties"]
@@ -174,6 +209,117 @@ func (o openapi) schemaTree(where string, schema map[string]any, depth int) prop
 		}
 
 		tree.props[name] = o.schemaTree(where+"."+name, m, depth+1)
+	}
+
+	return tree
+}
+
+// unionTree reduces a `oneOf` node to its arms, keyed by the discriminator
+// value that selects each one.
+//
+// Everything this insists on is something a decoder needs and the `oneOf`
+// list alone does not give it.
+//
+// **A discriminator.** Without one, the only way to decode is to try each arm
+// and keep whichever parses. The arms here overlap — both carry `object`,
+// both carry id-shaped strings — and `encoding/json` ignores unknown keys, so
+// that guess does not fail, it succeeds wrongly.
+//
+// **The mapping and the arm list held equal, both ways.** An arm the mapping
+// omits is one no discriminating decoder can reach; a mapping entry with no
+// arm names a schema the union does not contain. Either is a contract that
+// reads as complete and is not.
+//
+// **Each arm's own discriminator value.** The mapping says `simulation`
+// selects `StoredSimulation`; `StoredSimulation.object` says `const:
+// simulation`. Those are two independent statements in the document and they
+// must agree, or a body that satisfies the arm is one the mapping sends
+// somewhere else.
+func (o openapi) unionTree(where string, schema map[string]any, depth int) propertyTree {
+	o.t.Helper()
+
+	list, ok := schema["oneOf"].([]any)
+	if !ok || len(list) == 0 {
+		o.t.Fatalf("openapi.yaml: %s.oneOf is not a non-empty list", where)
+	}
+
+	discriminator, ok := schema["discriminator"].(map[string]any)
+	if !ok {
+		o.t.Fatalf("openapi.yaml: %s is a oneOf with no discriminator; the arms overlap, so a "+
+			"decoder that tried each in turn would not fail, it would succeed wrongly", where)
+	}
+
+	property, ok := discriminator["propertyName"].(string)
+	if !ok || property == "" {
+		o.t.Fatalf("openapi.yaml: %s.discriminator has no propertyName", where)
+	}
+
+	mapping, ok := discriminator["mapping"].(map[string]any)
+	if !ok || len(mapping) == 0 {
+		o.t.Fatalf("openapi.yaml: %s.discriminator has no mapping; without one the discriminator "+
+			"names a property and not what its values mean", where)
+	}
+
+	// The arms, by the schema name each `$ref` ends in.
+	armRefs := make([]string, 0, len(list))
+
+	for i, raw := range list {
+		m, ok := raw.(map[string]any)
+		if !ok {
+			o.t.Fatalf("openapi.yaml: %s.oneOf[%d] is not a mapping", where, i)
+		}
+
+		ref, ok := m["$ref"].(string)
+		if !ok {
+			o.t.Fatalf("openapi.yaml: %s.oneOf[%d] is not a $ref; this reader maps arms to "+
+				"discriminator values by reference, and an inline arm has no name to map", where, i)
+		}
+
+		armRefs = append(armRefs, ref)
+	}
+
+	mappedRefs := make([]string, 0, len(mapping))
+	for _, raw := range mapping {
+		ref, ok := raw.(string)
+		if !ok {
+			o.t.Fatalf("openapi.yaml: %s.discriminator.mapping has a non-string target", where)
+		}
+
+		mappedRefs = append(mappedRefs, ref)
+	}
+
+	assertSetsEqual(o.t, where+".discriminator.mapping", mappedRefs, armRefs,
+		"the discriminator mapping's targets", "the oneOf arms")
+
+	if depth > maxSchemaDepth {
+		o.t.Fatalf("openapi.yaml: %s nests deeper than %d", where, maxSchemaDepth)
+	}
+
+	tree := propertyTree{arms: map[string]propertyTree{}, discriminator: property}
+
+	for value, raw := range mapping {
+		ref, _ := raw.(string)
+		armWhere := where + "(" + value + ")"
+		arm := o.resolveRef(armWhere, map[string]any{"$ref": ref}, 0)
+
+		// The arm's own statement of which value it answers to.
+		props, ok := arm["properties"].(map[string]any)
+		if !ok {
+			o.t.Fatalf("openapi.yaml: %s resolves to a schema with no properties", armWhere)
+		}
+
+		field, ok := props[property].(map[string]any)
+		if !ok {
+			o.t.Fatalf("openapi.yaml: %s does not declare the discriminator property %q, so a "+
+				"body of this arm carries nothing to discriminate on", armWhere, property)
+		}
+
+		if got, ok := field["const"]; !ok || got != value {
+			o.t.Fatalf("openapi.yaml: the mapping sends %s=%q to %s, whose own %s is %v; a body "+
+				"satisfying that arm would be routed somewhere else", property, value, ref, property, got)
+		}
+
+		tree.arms[value] = o.schemaTree(armWhere, arm, depth+1)
 	}
 
 	return tree
@@ -273,6 +419,31 @@ func goTree(t *testing.T, where string, rt reflect.Type, depth int) propertyTree
 func comparePropertyTrees(t *testing.T, where string, got, want propertyTree, gotLabel, wantLabel string) {
 	t.Helper()
 
+	// A union node has no properties of its own, so without this it would
+	// reduce to the empty set — and so does a Go scalar. The two would
+	// compare equal, and every property under both arms would be unpinned
+	// with nothing saying so. That is the same failure the `allOf` fatal
+	// exists to prevent, one level further in.
+	if got.arms != nil || want.arms != nil {
+		assertSetsEqual(t, where+" (union arms)", got.armNames(), want.armNames(), gotLabel, wantLabel)
+
+		if got.discriminator != want.discriminator {
+			t.Errorf("%s: %s discriminates on %q, %s on %q",
+				where, gotLabel, got.discriminator, wantLabel, want.discriminator)
+		}
+
+		for value, wantArm := range want.arms {
+			gotArm, ok := got.arms[value]
+			if !ok {
+				continue // Already reported by the set comparison above.
+			}
+
+			comparePropertyTrees(t, where+"("+value+")", gotArm, wantArm, gotLabel, wantLabel)
+		}
+
+		return
+	}
+
 	assertSetsEqual(t, where, got.names(), want.names(), gotLabel, wantLabel)
 
 	for name, wantChild := range want.props {
@@ -304,11 +475,16 @@ var pinnedBodies = []struct {
 	{schema: "Simulation", value: api.Simulation{}, minPaths: 45},
 	{schema: "Quote", value: api.Quote{}, minPaths: 40},
 	{schema: "Transaction", value: api.Transaction{}, minPaths: 45},
+	// A393's sixth: the simulate arm of the `Command.result.body` union.
+	// Reached through `Command` rather than answered directly, which is why
+	// it is not one of AC86's five.
+	{schema: "StoredSimulation", value: api.StoredSimulation{}, minPaths: 45},
 }
 
 func TestResponseStructsEqualTheContractSchemas(t *testing.T) {
-	if len(pinnedBodies) != 5 {
-		t.Fatalf("AC86 names five response bodies; this pin covers %d", len(pinnedBodies))
+	if len(pinnedBodies) != 6 {
+		t.Fatalf("AC86 names five response bodies and A393 adds StoredSimulation; this pin covers %d",
+			len(pinnedBodies))
 	}
 
 	for _, c := range pinnedBodies {
@@ -333,6 +509,253 @@ func TestResponseStructsEqualTheContractSchemas(t *testing.T) {
 			comparePropertyTrees(t, c.schema, got, want,
 				"the Go struct's json tags", "openapi.yaml")
 		})
+	}
+}
+
+// resultBodyArmTypes binds each discriminator value to the Go type that
+// decodes it. Held to `CommandResultBody`'s own fields below, both ways, so
+// it cannot name an arm the decoder does not have or miss one it does.
+var resultBodyArmTypes = map[string]any{
+	"transaction": api.Transaction{},
+	"simulation":  api.StoredSimulation{},
+}
+
+// commandResultBodyPath is where the union lives in the document.
+var commandResultBodyPath = []string{
+	"components", "schemas", "Command", "properties", "result", "properties", "body",
+}
+
+// A393: `Command.result.body` is a union, and this pins it as one.
+//
+// The reason it is worth a test of its own rather than a row in
+// `pinnedBodies` is that a union is the shape a property-set comparison is
+// blindest to. `{oneOf: [...]}` carries no `properties`, so before A393
+// taught the reader to resolve it, the node would have reduced to the empty
+// set — and so does any Go scalar. The comparison would have been between
+// nothing and nothing, and every field of both arms would have been unpinned.
+//
+// What is asserted, and what each part would catch:
+//
+//   - the document's arms equal `api.ResultBodyArms`, both ways. That list is
+//     what the decoder switches on, so an arm added to the contract and not
+//     to the switch is a body answered with `ErrResultBodyShape` at the wire;
+//     an entry in the list the contract does not declare is a branch that can
+//     never be taken.
+//   - the arms equal `resultBodyArmTypes`'s keys, and that map's values equal
+//     the union struct's pointer fields, both ways. Together these say the
+//     Go type has exactly one arm per discriminator value.
+//   - each arm's fields equal its schema's properties, recursively, which is
+//     `comparePropertyTrees` doing what it does for the other six.
+func TestCommandResultBodyIsTheUnionTheContractDeclares(t *testing.T) {
+	o := loadContract(t)
+
+	want := o.schemaTree("Command.result.body", o.mapAt(commandResultBodyPath...), 0)
+
+	if want.arms == nil {
+		t.Fatal("Command.result.body did not read as a union; before A393 it was a bare " +
+			"`type: object`, and a reader that has gone back to seeing one would compare " +
+			"every field below against nothing")
+	}
+
+	// The floor. Both arms together are the whole of two money bodies, so a
+	// reader that resolved the union but lost an arm's `$ref` would land far
+	// under this.
+	if n := want.paths(); n < 100 {
+		t.Fatalf("read only %d property paths out of the Command.result.body union, expected at "+
+			"least 100; the reader has stopped matching and the comparisons below are vacuous", n)
+	}
+
+	assertSetsEqual(t, "Command.result.body arms", api.ResultBodyArms, want.armNames(),
+		"api.ResultBodyArms, which the decoder switches on", "openapi.yaml's discriminator mapping")
+
+	if want.discriminator != "object" {
+		t.Errorf("the contract discriminates result.body on %q; the decoder reads `object`",
+			want.discriminator)
+	}
+
+	// The registry, against the decoder's own fields. A pointer field is an
+	// arm; `Object` is the discriminator and is not.
+	declared := make([]string, 0, len(resultBodyArmTypes))
+	for value, v := range resultBodyArmTypes {
+		declared = append(declared, reflect.TypeOf(v).Name())
+
+		if _, ok := want.arms[value]; !ok {
+			t.Errorf("resultBodyArmTypes binds %q, which the contract's mapping does not name", value)
+		}
+	}
+
+	bound := []string{}
+	union := reflect.TypeOf(api.CommandResultBody{})
+
+	for i := range union.NumField() {
+		if f := union.Field(i); f.Type.Kind() == reflect.Pointer {
+			bound = append(bound, f.Type.Elem().Name())
+		}
+	}
+
+	assertSetsEqual(t, "CommandResultBody's arms", bound, declared,
+		"the pointer fields of api.CommandResultBody", "resultBodyArmTypes")
+
+	for value, wantArm := range want.arms {
+		v, ok := resultBodyArmTypes[value]
+		if !ok {
+			t.Errorf("the contract's mapping names %q, which no Go type decodes", value)
+
+			continue
+		}
+
+		rt := reflect.TypeOf(v)
+
+		comparePropertyTrees(t, "Command.result.body("+value+")",
+			goTree(t, rt.Name(), rt, 0), wantArm,
+			"the Go struct's json tags", "openapi.yaml")
+	}
+}
+
+// And that the decoder routes by the discriminator rather than by what
+// happens to parse.
+//
+// These bodies are two- and three-key probes of `encoding/json`'s behaviour
+// against these types and do not claim to be FERRY responses (C13). The claim
+// under test is the routing, and the case that matters is the third: a
+// simulate body has no key a transaction body lacks the ability to ignore, so
+// "decode into Transaction and see" succeeds on it.
+func TestCommandResultBodyRoutesOnTheDiscriminator(t *testing.T) {
+	var executed api.CommandResultBody
+
+	decode(t, `{"object":"transaction","status":"COMPLETED","subStatus":"SETTLED"}`, &executed)
+
+	if executed.Transaction == nil {
+		t.Fatal("an object=transaction body decoded to no transaction arm")
+	}
+
+	if executed.Simulation != nil {
+		t.Errorf("an object=transaction body also populated the simulation arm: %+v", executed.Simulation)
+	}
+
+	if executed.Transaction.Status != "COMPLETED" {
+		t.Errorf("status: got %q", executed.Transaction.Status)
+	}
+
+	var simulated api.CommandResultBody
+
+	decode(t, `{"object":"simulation","command_id":"cmd_1","plan":{"id":"plan_1"}}`, &simulated)
+
+	if simulated.Simulation == nil {
+		t.Fatal("an object=simulation body decoded to no simulation arm")
+	}
+
+	if simulated.Transaction != nil {
+		t.Errorf("an object=simulation body also populated the transaction arm: %+v", simulated.Transaction)
+	}
+
+	if simulated.Simulation.CommandID != "cmd_1" {
+		t.Errorf("command_id: got %q", simulated.Simulation.CommandID)
+	}
+
+	// The two refusals. An unrecognised `object` must not be decoded into
+	// whichever arm tolerates it, and a body with no `object` has nothing to
+	// route on — AC74 reads `result.body.status`, and both of these would
+	// otherwise reach it as a transaction with an empty status.
+	for _, body := range []string{
+		`{"object":"receipt","status":"COMPLETED"}`,
+		`{"status":"COMPLETED"}`,
+	} {
+		var got api.CommandResultBody
+
+		err := json.Unmarshal([]byte(body), &got)
+		if !errors.Is(err, api.ErrResultBodyShape) {
+			t.Errorf("decoding %s: got %v, want ErrResultBodyShape", body, err)
+		}
+
+		if got.Transaction != nil || got.Simulation != nil || got.Object != "" {
+			t.Errorf("decoding %s left %+v behind; a refused body must leave nothing a caller "+
+				"could read as an arm", body, got)
+		}
+	}
+}
+
+// A393: the three `error.details` keys this CLI branches on are declared by
+// the contract, and the envelope still decodes the ones it does not.
+//
+// `ErrorDetails` is an **open** object — `additionalProperties: true` — and
+// that is deliberate: which keys a body carries follows from `code`, several
+// codes emit more than one shape under one code, and a closed set would make
+// adding a diagnostic key a breaking change for every generated client. The
+// cost of open is that a client cannot be sure a key it reads is one FERRY
+// sends, which is exactly the risk here: C19 splits `IDEMPOTENCY_KEY_REUSED`
+// on `details.reason`, and reading a key the renderer does not emit gets ""
+// and takes the safe-looking branch on a double-send.
+//
+// So the three names are taken from the **accessors**, by feeding each one a
+// details map carrying only its key and seeing whether it comes back. That is
+// what makes this not a restatement of a list: a rename in `internal/outcome`
+// leaves the accessor reading a key the document does not declare, and this
+// goes red.
+//
+// This direction is CLI-into-document and is the only one a Go test can take.
+// The other direction — every key FERRY renders appears in `ErrorDetails` —
+// is Ruby's, and `spec/docs/api_docs_spec.rb` sweeps the emitters for it.
+func TestTheDetailKeysThisCLIBranchesOnAreDeclared(t *testing.T) {
+	read := map[string]func(outcome.Input) string{
+		"reason":     outcome.Input.Reason,
+		"state":      outcome.Input.State,
+		"command_id": outcome.Input.DetailCommandID,
+	}
+
+	o := loadContract(t)
+	declared := o.mapAt("components", "schemas", "ErrorDetails", "properties")
+
+	if len(declared) < 20 {
+		t.Fatalf("ErrorDetails declares only %d properties; the reader has stopped matching, and "+
+			"the lookups below would be against an empty vocabulary", len(declared))
+	}
+
+	for key, accessor := range read {
+		t.Run(key, func(t *testing.T) {
+			probe := outcome.Input{Envelope: &outcome.Envelope{
+				Code:    "IDEMPOTENCY_KEY_REUSED",
+				Details: map[string]any{key: "sentinel"},
+			}}
+
+			if got := accessor(probe); got != "sentinel" {
+				t.Fatalf("the accessor did not read details[%q] (got %q); this case names a key "+
+					"nothing reads, so the assertion below proves nothing", key, got)
+			}
+
+			property, ok := declared[key].(map[string]any)
+			if !ok {
+				t.Fatalf("this CLI branches on error.details.%s and openapi.yaml's ErrorDetails "+
+					"does not declare it. Under `additionalProperties: true` nothing else will "+
+					"say so, and the branch not taken is the one that matters (C19)", key)
+			}
+
+			// A declared key with no prose is one a caller cannot tell the
+			// meaning of, and these three mean different things per code.
+			if s, _ := property["description"].(string); len(s) < 20 {
+				t.Errorf("ErrorDetails.%s has no usable description (%q); which codes emit it is "+
+					"the whole of what a caller needs to branch safely", key, s)
+			}
+		})
+	}
+
+	// Open, and the envelope decoder must therefore keep what it is not
+	// expecting. A struct here would drop every key but the three above,
+	// silently, which is the failure `additionalProperties: true` invites.
+	if open, _ := o.mapAt("components", "schemas", "ErrorDetails")["additionalProperties"].(bool); !open {
+		t.Error("ErrorDetails is no longer an open object; if the contract has closed the set, " +
+			"this test's reasoning about unknown keys needs re-reading")
+	}
+
+	carried, err := api.DecodeEnvelope([]byte(`{"error":{"code":"X","message":"m","retriable":false,` +
+		`"retry_after_seconds":null,"details":{"reason":"different_request","not_yet_documented":1},` +
+		`"request_id":null,"docs_url":"d"}}`))
+	if err != nil {
+		t.Fatalf("decoding an envelope with an undeclared detail key: %v", err)
+	}
+
+	if _, ok := carried.Details["not_yet_documented"]; !ok {
+		t.Errorf("the decoder dropped a detail key the contract does not name: %v", carried.Details)
 	}
 }
 
@@ -486,9 +909,12 @@ var unpinnedBodySchemas = map[string]string{
 		"of the seven, and pinned against Error.error.required by AC17 (contract_test.go).",
 	"Command": "the asynchronous result. internal/outcome decides on it and its `state` enum is " +
 		"pinned against the document by AC25 (contract_test.go); AC86 names the five bodies that " +
-		"carry the terms of a transfer. Note that `Command.result.body` is itself `type: object`, " +
-		"so the body AC74 branches on has no schema to pin — a finding for U8, not something " +
-		"this file can fix.",
+		"carry the terms of a transfer. Its `result.body` is no longer the bare `type: object` " +
+		"U2b found (A321): A393 typed it as a discriminated union, and " +
+		"TestCommandResultBodyIsTheUnionTheContractDeclares pins both arms field-for-field. " +
+		"The envelope around them — `state`, `last_error`, `contradiction` — has no Go struct " +
+		"here yet because nothing in internal/api decodes a command body; when the poll loop " +
+		"lands, that struct belongs in this list rather than in this exclusion.",
 	"List": "the paginated envelope. Its `data` items are `ApiKey`, which is pinned above; the " +
 		"envelope's own five keys belong to U4's `keys list` (AC39).",
 	"Corridor": "pinned field-for-field, with `Corridor.amount` and `CorridorSide` as their own " +
@@ -584,6 +1010,21 @@ func (o openapi) responseSchemaNames() []string {
 			}
 
 			return
+		}
+
+		// A composed response body. No response is one today — A393's union
+		// is nested inside `Command`, and this walk stops at a schema
+		// boundary by design — but a union answered directly would
+		// otherwise contribute no names at all, and its arms would be
+		// bodies nothing here is answerable for.
+		for _, keyword := range []string{"oneOf", "anyOf", "allOf"} {
+			if arms, ok := schema[keyword].([]any); ok {
+				for i, raw := range arms {
+					if m, ok := raw.(map[string]any); ok {
+						collect(fmt.Sprintf("%s.%s[%d]", where, keyword, i), m, depth+1)
+					}
+				}
+			}
 		}
 
 		if props, ok := schema["properties"].(map[string]any); ok {

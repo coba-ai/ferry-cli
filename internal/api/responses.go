@@ -1,7 +1,9 @@
 package api
 
-// The five response bodies this CLI reads, hand-written and pinned
-// field-for-field to `openapi.yaml` (WD1, §5.12, AC86).
+// The response bodies this CLI reads, hand-written and pinned
+// field-for-field to `openapi.yaml` (WD1, §5.12, AC86) — AC86's five, plus
+// `StoredSimulation`, the simulate arm of the `Command.result.body` union
+// that A393 typed.
 //
 // `schema_pin_test.go` holds these structs and the document to **set
 // equality**, recursively and in both directions. The direction that costs
@@ -160,6 +162,36 @@ type SimulationMeta struct {
 	// rendering an empty one would tell a caller nothing while looking like
 	// an answer.
 	Remediation *string `json:"remediation"`
+}
+
+// StoredSimulation is the `StoredSimulation` schema — the `transfers_simulate`
+// arm of `Command.result.body`, which is what a poll of a completed simulate
+// command carries.
+//
+// It is `Simulation` minus the two conditional properties, and the omissions
+// are structural rather than incidental: `plan.token` is minted with the plan
+// and never stored, and `meta` is added by the replay renderer at render time,
+// so a body that was written to the ledger has been through neither. A caller
+// polling a completed simulate therefore gets the quote and the plan's
+// identity and **never a usable plan token**.
+//
+// It is its own type and not `Simulation` with two nils, for the reason
+// `APIKeyEnvironment` is not `PrincipalEnvironment`: a divergence between the
+// stored body and the `201` should redden the pin rather than be absorbed by
+// a field that was allowed to be absent anyway.
+type StoredSimulation struct {
+	Object    string     `json:"object"`
+	CommandID string     `json:"command_id"`
+	Quote     Quote      `json:"quote"`
+	Plan      StoredPlan `json:"plan"`
+}
+
+// StoredPlan is `StoredSimulation.plan` — `Plan` with no `token`, because the
+// ledger never stored one.
+type StoredPlan struct {
+	Object    string `json:"object"`
+	ID        string `json:"id"`
+	ExpiresAt string `json:"expires_at"`
 }
 
 // Quote is the `Quote` schema — what FERRY keeps of an upstream quote.
