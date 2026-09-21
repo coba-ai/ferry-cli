@@ -201,6 +201,66 @@ func TestFailedTerminalReadsTheLastErrorThroughTheSameTable(t *testing.T) {
 
 		assertCommand(t, got, outcome.ClassEscalate, 7, outcome.MoneyUnknown, false, "which this CLI does not know")
 	})
+
+	t.Run("a code whose wire remedy is to retry escalates too", func(t *testing.T) {
+		// `RATE_LIMITED` is `transient`/5 on the wire — "nothing was
+		// sent, resend the identical request under the same key". Said
+		// about a `failed_terminal` command, that is advice to replay one
+		// stored answer forever, and `money: no` is a claim about a
+		// transfer whose failure reason we are reading second-hand.
+		got := outcome.ClassifyCommand(failed("transfers_execute", "RATE_LIMITED"))
+
+		assertCommand(t, got, outcome.ClassEscalate, 7, outcome.MoneyUnknown, false, `means "try again"`)
+	})
+}
+
+// The whole vocabulary, in one sweep: no catalogued code may classify a
+// terminal command into a class that tells the caller to come back.
+//
+// The sweep and not five examples, because `last_error.code` is written by the
+// Rails side from a vocabulary that is not the wire catalogue — the recordings
+// carry `UPSTREAM_UNKNOWN` there, which `errors.md` does not name — so which
+// codes can arrive is not something this package gets to decide. Holding the
+// property over every row is the only version of it that survives a new
+// writer on the Ruby side.
+func TestNoTerminalCommandIsToldToComeBack(t *testing.T) {
+	forbidden := map[outcome.Class]bool{
+		outcome.ClassTransient: true,
+		outcome.ClassPending:   true,
+	}
+
+	codes := outcome.Codes()
+	if len(codes) < 50 {
+		t.Fatalf("the table has %d rows; this sweep expects the whole catalogue", len(codes))
+	}
+
+	checked := 0
+
+	for _, code := range codes {
+		for _, op := range []outcome.Operation{outcome.OpExecuteTransfer, outcome.OpSimulateTransfer} {
+			checked++
+
+			got := outcome.ClassifyCommand(outcome.CommandInput{
+				Operation:     string(op),
+				State:         "failed_terminal",
+				LastErrorCode: code,
+			})
+
+			if forbidden[got.Class] {
+				t.Errorf("a %s command that failed terminally with %s classifies %q/%d; a terminal command will not move again, so no class may tell the caller to wait or poll",
+					op, code, got.Class, got.Exit)
+			}
+
+			if got.SameKeySafe && got.Class != outcome.ClassAcceptedUpstream {
+				t.Errorf("a %s command that failed terminally with %s reports same_key_safe; resending the same key replays this terminal answer",
+					op, code)
+			}
+		}
+	}
+
+	if checked < 100 {
+		t.Fatalf("swept %d (code, operation) pairs; the sweep has stopped matching", checked)
+	}
 }
 
 func assertCommand(t *testing.T, got outcome.Outcome, class outcome.Class, exit int, money outcome.Money, sameKeySafe bool, nextHas string) {

@@ -148,6 +148,35 @@ func classifyFailedTerminal(in CommandInput) Outcome {
 
 	v := r.verdictFor(class)
 
+	// A `failed_terminal` command will not move again (`openapi.yaml`,
+	// Command.state), so no class whose remedy is to come back may stand
+	// here, whatever the same code means on the wire. `transient` says
+	// "nothing was sent, resend the identical request under the same key",
+	// which replays this same terminal answer forever *and* asserts
+	// `money: no` about a command we are reading a failure reason off;
+	// `pending` says the outcome is not established, which sends §5.7's
+	// loop back to poll a row that has stopped.
+	//
+	// This is the rule the unknown-code branch above already applies.
+	// Applying it only there left the *known* codes able to say "come
+	// back" about something that has already finished.
+	//
+	// Unreachable through today's Rails writers — `Ledger::Fail` is called
+	// with policy verdicts, `UPSTREAM_UNAVAILABLE`, `QUOTE_REJECTED` and
+	// `UPSTREAM_CONTRACT_VIOLATION`, all of which classify `refused_*`. It
+	// is a guard and not a live fix, because `last_error.code` is not the
+	// wire vocabulary: the recordings carry `UPSTREAM_UNKNOWN` there, which
+	// the error catalogue does not name at all
+	// (`recorded_test.go`, TestRecordedCommandLastErrorVocabulary). A field
+	// whose vocabulary overlaps ours by coincidence is not one to read
+	// through our table unguarded.
+	if v.class == ClassTransient || v.class == ClassPending {
+		return commandOutcome(in, ClassEscalate, fmt.Sprintf(
+			"This command failed terminally, and the code %q it failed with means \"try again\" — which a command that has stopped cannot do. This CLI will not say whether money moved. A human must read this command.",
+			in.LastErrorCode,
+		))
+	}
+
 	return commandOutcome(in, v.class, v.next)
 }
 
