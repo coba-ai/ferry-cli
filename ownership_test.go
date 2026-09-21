@@ -77,10 +77,20 @@ func walkFiles(t *testing.T) []string {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() {
-			if d.Name() == ".git" {
+		// git's own plumbing, which is never source. It is a directory in a
+		// normal clone and a *file* holding a gitdir pointer in a worktree
+		// or a submodule, and skipping only the directory form (A403) made
+		// the lint fail for everyone working in a worktree — on a path
+		// nobody could sensibly give a unit, so the only repairs available
+		// were to stop running the suite or to give OWNERSHIP a line about
+		// git. Both cost more than the check is worth.
+		if d.Name() == ".git" {
+			if d.IsDir() {
 				return fs.SkipDir
 			}
+			return nil
+		}
+		if d.IsDir() {
 			return nil
 		}
 		files = append(files, filepath.ToSlash(path))

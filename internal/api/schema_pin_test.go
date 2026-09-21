@@ -369,6 +369,22 @@ func goTree(t *testing.T, where string, rt reflect.Type, depth int) propertyTree
 		t.Fatalf("%s is nested deeper than %d levels", where, maxSchemaDepth)
 	}
 
+	// A type with its own codec is a leaf, because its Go fields are not
+	// what it puts on the wire. `api.StringList` is the one here: it decodes
+	// a `[array, "null"]` into `{Present, Values}`, two names the contract
+	// has never heard of and which carry no json tags, so walking its fields
+	// would compare private bookkeeping against a schema and fail on both
+	// directions at once.
+	//
+	// This is a leaf and not a skip. If such a type ever marshalled to an
+	// *object*, the schema node opposite it would still declare properties,
+	// and comparing them against this empty set is how that gets found —
+	// the equality below reports what the document has and the Go side does
+	// not, which is exactly the right complaint.
+	if isCustomCodec(rt) {
+		return propertyTree{}
+	}
+
 	for rt.Kind() == reflect.Pointer || rt.Kind() == reflect.Slice || rt.Kind() == reflect.Array {
 		rt = rt.Elem()
 	}
@@ -412,6 +428,24 @@ func goTree(t *testing.T, where string, rt reflect.Type, depth int) propertyTree
 	}
 
 	return tree
+}
+
+// isCustomCodec reports whether the type, or a pointer to it, decides its own
+// JSON representation. Both interfaces are checked: `MarshalJSON` is what a
+// re-encoded body is written through and `UnmarshalJSON` is what a response
+// is read through, and a type declaring either has taken the wire shape out
+// of its field list.
+func isCustomCodec(rt reflect.Type) bool {
+	marshaler := reflect.TypeOf((*json.Marshaler)(nil)).Elem()
+	unmarshaler := reflect.TypeOf((*json.Unmarshaler)(nil)).Elem()
+
+	for _, iface := range []reflect.Type{marshaler, unmarshaler} {
+		if rt.Implements(iface) || reflect.PointerTo(rt).Implements(iface) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // comparePropertyTrees asserts set equality at this level and then at every
@@ -479,12 +513,19 @@ var pinnedBodies = []struct {
 	// Reached through `Command` rather than answered directly, which is why
 	// it is not one of AC86's five.
 	{schema: "StoredSimulation", value: api.StoredSimulation{}, minPaths: 45},
+	// A402's seventh: the paginated envelope, which until now was declared
+	// in `internal/noun/keys` and pinned by nothing. The instantiation is
+	// the point — `List[ApiKey]` is what `GET /v1/api_keys` answers, and it
+	// is a concrete struct, so the walk goes through `data` into the item
+	// type and pins the key alongside the wrapper. Its floor is the
+	// envelope's five keys plus `ApiKey`'s sixteen.
+	{schema: "List", value: api.List[api.APIKey]{}, minPaths: 18},
 }
 
 func TestResponseStructsEqualTheContractSchemas(t *testing.T) {
-	if len(pinnedBodies) != 6 {
-		t.Fatalf("AC86 names five response bodies and A393 adds StoredSimulation; this pin covers %d",
-			len(pinnedBodies))
+	if len(pinnedBodies) != 7 {
+		t.Fatalf("AC86 names five response bodies, A393 adds StoredSimulation and A402 adds List; "+
+			"this pin covers %d", len(pinnedBodies))
 	}
 
 	for _, c := range pinnedBodies {
@@ -509,6 +550,85 @@ func TestResponseStructsEqualTheContractSchemas(t *testing.T) {
 			comparePropertyTrees(t, c.schema, got, want,
 				"the Go struct's json tags", "openapi.yaml")
 		})
+	}
+}
+
+// corridorEnvelopePath is where `GET /v1/corridors` declares its answer. It
+// is inline rather than a `components.schemas` entry, which is why this
+// envelope needs a test of its own and cannot be a row in `pinnedBodies`.
+var corridorEnvelopePath = []string{
+	"paths", "/v1/corridors", "get", "responses", "200", "content", "application/json", "schema",
+}
+
+// A402: the second envelope, `{object, data}` with no cursor fields.
+//
+// A341 read the two local `List` declarations as two copies of one shape.
+// They are not, and the distinction is the whole reason this is a separate
+// assertion: if `api.Collection` and `api.List` were the same type, this
+// test would fail with three properties the contract does not declare —
+// `has_more`, `next_cursor` and `limit` — invented for an endpoint that
+// pages nothing. That failure is the guard against the tidier-looking fix.
+//
+// The walk goes through `data` into `Corridor`, so this pins the item type
+// recursively as well: `Corridor`, `CorridorSide` on both sides and the
+// inline `amount` object. `allowed_assets` and `allowed_networks` are
+// `api.StringList`, which has its own codec and is therefore a leaf on the
+// Go side; the contract makes them arrays of strings, which is a leaf on the
+// document side too, so the two agree for the same reason rather than by
+// accident.
+func TestTheCorridorEnvelopeEqualsTheContract(t *testing.T) {
+	o := loadContract(t)
+
+	want := o.schemaTree("GET /v1/corridors.200", o.mapAt(corridorEnvelopePath...), 0)
+
+	// The floor. Two envelope keys plus twenty paths of `Corridor`; a reader
+	// that resolved the envelope but lost the `$ref` under `data.items`
+	// would land at two, and two-against-two would be green.
+	if n := want.paths(); n < 18 {
+		t.Fatalf("read only %d property paths out of the GET /v1/corridors 200 schema, expected "+
+			"at least 18; the reader has stopped matching and the comparison below is vacuous", n)
+	}
+
+	rt := reflect.TypeOf(api.Collection[api.Corridor]{})
+
+	comparePropertyTrees(t, "GET /v1/corridors.200", goTree(t, "Collection[Corridor]", rt, 0), want,
+		"the Go struct's json tags", "openapi.yaml")
+}
+
+// And the two envelopes are not interchangeable, stated as an assertion
+// rather than left to the two pins above to imply.
+//
+// `api.List` and `api.Collection` agree on `object` and `data` and differ on
+// exactly the three pagination keys. A future tidy-up that gave `Collection`
+// a `has_more`, or took `limit` off `List` to make one serve both, would be
+// caught by the pins — but this says in one place what the difference is and
+// that it is deliberate, which is the thing A341 did not know.
+func TestTheTwoEnvelopesDifferByThePaginationKeysAndNothingElse(t *testing.T) {
+	paginated := goTree(t, "List", reflect.TypeOf(api.List[api.APIKey]{}), 0)
+	whole := goTree(t, "Collection", reflect.TypeOf(api.Collection[api.Corridor]{}), 0)
+
+	if len(paginated.props) == 0 || len(whole.props) == 0 {
+		t.Fatal("one of the envelopes read as having no properties; the walk is broken and the " +
+			"difference below would be vacuous")
+	}
+
+	var extra []string
+
+	for name := range paginated.props {
+		if _, ok := whole.props[name]; !ok {
+			extra = append(extra, name)
+		}
+	}
+
+	assertSetsEqual(t, "what the paginated envelope adds", extra,
+		[]string{"has_more", "next_cursor", "limit"},
+		"api.List minus api.Collection", "the three pagination keys")
+
+	for name := range whole.props {
+		if _, ok := paginated.props[name]; !ok {
+			t.Errorf("api.Collection declares %q, which api.List does not; the unpaginated "+
+				"envelope is the paginated one without its cursor fields, not a third shape", name)
+		}
 	}
 }
 
@@ -915,10 +1035,10 @@ var unpinnedBodySchemas = map[string]string{
 		"The envelope around them — `state`, `last_error`, `contradiction` — has no Go struct " +
 		"here yet because nothing in internal/api decodes a command body; when the poll loop " +
 		"lands, that struct belongs in this list rather than in this exclusion.",
-	"List": "the paginated envelope. Its `data` items are `ApiKey`, which is pinned above; the " +
-		"envelope's own five keys belong to U4's `keys list` (AC39).",
 	"Corridor": "pinned field-for-field, with `Corridor.amount` and `CorridorSide` as their own " +
-		"cases, by TestRequestBodyFieldsEqualTheContract (AC25); `null` versus `[]` is AC26.",
+		"cases, by TestRequestBodyFieldsEqualTheContract (AC25); `null` versus `[]` is AC26. " +
+		"A402 pins it a second time and recursively, as the item type of the envelope " +
+		"TestTheCorridorEnvelopeEqualsTheContract reads.",
 }
 
 func TestEveryResponseSchemaIsPinnedOrExcluded(t *testing.T) {
@@ -926,8 +1046,9 @@ func TestEveryResponseSchemaIsPinnedOrExcluded(t *testing.T) {
 
 	referenced := o.responseSchemaNames()
 
-	// Eight is what the document has today: the four pinned above (less
-	// `Quote`, which is reached through `Simulation`) plus the four excluded
+	// Eight is what the document has today: the five pinned above that a
+	// response references directly (`Quote` is reached through `Simulation`
+	// and `StoredSimulation` through `Command`) plus the three excluded
 	// below. It is a floor on the reader, not a count of the contract — but a
 	// change that leaves a response body unreferenced should be read here
 	// rather than quietly shrinking what this test is answerable for.

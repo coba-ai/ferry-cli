@@ -32,23 +32,12 @@ func Command(deps noun.Deps) *cobra.Command {
 	return cmd
 }
 
-// List is the `List` envelope of `GET /v1/api_keys`.
+// List is the `List` envelope of `GET /v1/api_keys`, with `ApiKey` items.
 //
-// Declared here rather than in `internal/api` because that package (U2)
-// declares no list envelope: AC85 points `List.data.items` at `ApiKey` on the
-// Rails side, and U2b wrote the five item schemas but not the wrapper. The
-// item type is `api.APIKey`, so nothing about the key itself is re-declared.
-type List struct {
-	Object string       `json:"object"`
-	Data   []api.APIKey `json:"data"`
-
-	// HasMore and NextCursor are the two halves of the same fact and both
-	// are read: a cursor is followed only when `has_more` says there is
-	// another page, and it is never constructed (AC39).
-	HasMore    bool    `json:"has_more"`
-	NextCursor *string `json:"next_cursor"`
-	Limit      int     `json:"limit"`
-}
+// The envelope itself now lives in `internal/api` and is pinned to the
+// `List` schema in both directions (A402); this alias is what the verbs
+// here read, so nothing about the envelope or the key is declared twice.
+type List = api.List[api.APIKey]
 
 func encode(v any) (json.RawMessage, error) {
 	raw, err := json.Marshal(v)

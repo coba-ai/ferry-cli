@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kurenn/ferry-cli/internal/api"
 	"github.com/kurenn/ferry-cli/internal/fixture"
 	"github.com/kurenn/ferry-cli/internal/noun/keys"
 )
@@ -320,5 +321,21 @@ func TestANonPositiveLimitIsRefusedLocally(t *testing.T) {
 		if !strings.Contains(stderr, "--limit") {
 			t.Errorf("the refusal does not name the flag: %q", stderr)
 		}
+	}
+}
+
+// A402, the other half of the binding asserted in the corridors package:
+// `GET /v1/api_keys` is read through the paginated envelope.
+//
+// `keys list` re-encodes this struct to build the aggregated page (AC39), so
+// the wrong envelope here is not only a decode that drops `has_more` — it is
+// a JSON document this CLI prints with three keys missing, having followed
+// no cursor to find them.
+func TestTheKeyListEnvelopeIsThePaginatedOne(t *testing.T) {
+	got := reflect.TypeOf(keys.List{})
+	want := reflect.TypeOf(api.List[api.APIKey]{})
+
+	if got != want {
+		t.Fatalf("keys reads GET /v1/api_keys as %s, not the paginated %s", got, want)
 	}
 }
