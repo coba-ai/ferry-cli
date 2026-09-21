@@ -1,0 +1,48 @@
+{
+  "scenario": "auth.token_revoked.401",
+  "expect": [
+    {
+      "status": 401,
+      "code": "TOKEN_REVOKED",
+      "headers_present": [
+        "WWW-Authenticate"
+      ],
+      "headers_absent": [],
+      "body_has": [],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/me",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "WWW-Authenticate": "Bearer realm=\"ferry\", error=\"invalid_token\""
+        },
+        "body": {
+          "error": {
+            "code": "TOKEN_REVOKED",
+            "message": "The bearer token has been revoked.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "revoked_at": "TIMESTAMP_PLACEHOLDER_1"
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/TOKEN_REVOKED"
+          }
+        }
+      }
+    }
+  ]
+}

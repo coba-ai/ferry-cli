@@ -1,0 +1,112 @@
+{
+  "scenario": "execute.upstream_busy.with_command.503",
+  "expect": [
+    {
+      "status": 503,
+      "code": "UPSTREAM_BUSY",
+      "headers_present": [
+        "Ferry-Command-Id",
+        "Retry-After"
+      ],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.command_id",
+        "error.details.state",
+        "error.retry_after_seconds"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    },
+    {
+      "status": 200,
+      "code": null,
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "object",
+        "id",
+        "state",
+        "poll"
+      ],
+      "body_lacks": [
+        "result"
+      ],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 503,
+        "headers": {
+          "Ferry-Command-Id": "cmd_PLACEHOLDER_1",
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Retry-After": "5",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "UPSTREAM_BUSY",
+            "message": "The upstream service could not be reached. Retry after the interval in the Retry-After header.",
+            "retriable": true,
+            "retry_after_seconds": 5,
+            "details": {
+              "command_id": "cmd_PLACEHOLDER_1",
+              "state": "failed_retriable"
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/UPSTREAM_BUSY"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/commands/cmd_PLACEHOLDER_1",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "object": "command",
+          "id": "cmd_PLACEHOLDER_1",
+          "operation": "transfers_execute",
+          "state": "failed_retriable",
+          "created_at": "TIMESTAMP_PLACEHOLDER_1",
+          "state_changed_at": "TIMESTAMP_PLACEHOLDER_2",
+          "attempts": 1,
+          "poll": "/v1/commands/cmd_PLACEHOLDER_1",
+          "retry_after_seconds": 5,
+          "result": null,
+          "last_error": {
+            "code": "UPSTREAM_UNAVAILABLE",
+            "category": "never_sent",
+            "transport_error": "no upstream credential was available to sign the request"
+          },
+          "contradiction": null,
+          "transaction_id": null,
+          "idempotency_key": "IDEMPOTENCY_KEY_PLACEHOLDER_1"
+        }
+      }
+    }
+  ]
+}

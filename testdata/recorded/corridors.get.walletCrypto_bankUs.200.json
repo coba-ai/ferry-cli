@@ -1,0 +1,79 @@
+{
+  "scenario": "corridors.get.walletCrypto_bankUs.200",
+  "expect": [
+    {
+      "status": 200,
+      "code": null,
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "object",
+        "id",
+        "composite",
+        "source.allowed_networks",
+        "destination.allowed_networks",
+        "availability_stated",
+        "amount.side",
+        "quotable"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/corridors/walletCrypto-%3EbankUs",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "object": "corridor",
+          "id": "walletCrypto->bankUs",
+          "composite": "cryptoToFiatAccount",
+          "source": {
+            "type": "walletCrypto",
+            "category": "crypto",
+            "allowed_assets": null,
+            "allowed_networks": [
+              "ethereum",
+              "polygon",
+              "base",
+              "solana",
+              "tron"
+            ]
+          },
+          "destination": {
+            "type": "bankUs",
+            "category": "fiatAccount",
+            "allowed_assets": [
+              "usd"
+            ],
+            "allowed_networks": [
+              "ach",
+              "achSameDay",
+              "wire"
+            ]
+          },
+          "availability_stated": false,
+          "amount": {
+            "side": "either",
+            "multiple": null,
+            "maximum": null
+          },
+          "quotable": true,
+          "reason": null
+        }
+      }
+    }
+  ]
+}

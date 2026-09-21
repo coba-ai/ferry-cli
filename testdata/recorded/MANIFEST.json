@@ -1,0 +1,1612 @@
+{
+  "scenarios": [
+    {
+      "scenario": "me.api_key.200",
+      "sha256": "a76742dc958495c9fe2151b3fcd32460cc64dfc171de4991fbe7033073076572",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [
+            "Ferry-Environment"
+          ],
+          "headers_absent": [
+            "Ferry-Command-Id",
+            "Idempotency-Replayed",
+            "WWW-Authenticate"
+          ],
+          "body_has": [
+            "object",
+            "kind",
+            "organization.id",
+            "organization.status",
+            "environment.id",
+            "environment.kind",
+            "credential.id",
+            "credential.scopes",
+            "credential.token_prefix"
+          ],
+          "body_lacks": [
+            "user",
+            "role"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "me.pat.200",
+      "sha256": "c46ee9b9eb4270e66e05fc82277c62a703125e24809b6f669dffae742073dea0",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [
+            "Ferry-Environment",
+            "WWW-Authenticate"
+          ],
+          "body_has": [
+            "object",
+            "kind",
+            "organization.slug",
+            "user.email",
+            "credential.scopes",
+            "environments"
+          ],
+          "body_lacks": [
+            "environment"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "auth.token_missing.401",
+      "sha256": "fbd9c393f77a4fa68bac66b398ff4de7219c4db540563922b533a20b02342ccc",
+      "expect": [
+        {
+          "status": 401,
+          "code": "TOKEN_MISSING",
+          "headers_present": [
+            "WWW-Authenticate"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.request_id"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "auth.token_invalid.401",
+      "sha256": "445569adada17058814fecc558d5ad76c5274e001b2c863999256b2c7385deb8",
+      "expect": [
+        {
+          "status": 401,
+          "code": "TOKEN_INVALID",
+          "headers_present": [
+            "WWW-Authenticate"
+          ],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "auth.token_revoked.401",
+      "sha256": "bd389bf8e6530d3e7782176e651239dfa266df7f14a156874e5e540aad26cca4",
+      "expect": [
+        {
+          "status": 401,
+          "code": "TOKEN_REVOKED",
+          "headers_present": [
+            "WWW-Authenticate"
+          ],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "auth.wrong_class.api_keys_with_api_key.403",
+      "sha256": "ac38bba4ccab486d4d5cb9d8d781ea0a12e31e104d585637f37c574473a6413e",
+      "expect": [
+        {
+          "status": 403,
+          "code": "WRONG_TOKEN_CLASS",
+          "headers_present": [],
+          "headers_absent": [
+            "WWW-Authenticate"
+          ],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "auth.wrong_class.transfers_with_pat.403",
+      "sha256": "91ca8badd2bc480a4af254f7c96c62fbffdbce898e864d9f6ad221e80a941395",
+      "expect": [
+        {
+          "status": 403,
+          "code": "WRONG_TOKEN_CLASS",
+          "headers_present": [],
+          "headers_absent": [
+            "Ferry-Command-Id"
+          ],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "auth.insufficient_scope.403",
+      "sha256": "58a9556cb466b5e57e2f5a4068535588cb527b6788a4f0ec4f842ff46536f678",
+      "expect": [
+        {
+          "status": 403,
+          "code": "INSUFFICIENT_SCOPE",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.required_scopes"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "auth.unsupported_media_type.415",
+      "sha256": "d4f4824210233393bde1a2e0912f3436f47ae1d79f06a97387ecba02d00e5599",
+      "expect": [
+        {
+          "status": 415,
+          "code": "UNSUPPORTED_MEDIA_TYPE",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.list.page1.200",
+      "sha256": "5f5c6eb77872467336818aff49c4fba38cfff4709c7a80e69810755b94e9ca80",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [
+            "Ferry-Environment"
+          ],
+          "body_has": [
+            "object",
+            "data",
+            "has_more",
+            "next_cursor",
+            "limit"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.list.page2.200",
+      "sha256": "163464304a6ce7a3dfc3e129acd9017aeee114d3bbd30b1c85c8d46ae7eb7bf9",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "data",
+            "limit"
+          ],
+          "body_lacks": [
+            "next_cursor"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.list.bad_status.400",
+      "sha256": "8417362127b65a901ae504c4fc73ec5feb4783b3df6c1cdb965eb19dccc81d49",
+      "expect": [
+        {
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.fields"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.create.sandbox.201",
+      "sha256": "7bf129dae966cda3ec360e364d467e8bf2ea42317147a76ab4dada603e295b30",
+      "expect": [
+        {
+          "status": 201,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "token",
+            "token_prefix",
+            "token_last4",
+            "environment.kind",
+            "scopes",
+            "expires_at"
+          ],
+          "body_lacks": [
+            "revoked_at"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.create.live_money.step_up.403",
+      "sha256": "ac4cb1333d1224e974d7bf057808147d4f5d904f39e4cfb668c7530c0d3517a5",
+      "expect": [
+        {
+          "status": 403,
+          "code": "STEP_UP_REQUIRED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.create.unknown_key.400",
+      "sha256": "f7fe29ee5968f85f96a20b0ba576069eb293d6b9fd0d034c04049b4b4c1f291a",
+      "expect": [
+        {
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.fields"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.create.expires_beyond_ceiling.400",
+      "sha256": "8fc7925a2f168aeece269ccbdf1202152c5d592a161f8a0c0944d3d79f31593a",
+      "expect": [
+        {
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.fields"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.get.200",
+      "sha256": "10cd9c5e1f57d13cc06d01f9294ac0e29cfaa9da801c7905069e5869574ce788",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "token_prefix",
+            "environment.kind",
+            "scopes"
+          ],
+          "body_lacks": [
+            "token"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.get.404",
+      "sha256": "fef9069de99a0e842fd4e840120ed7bf185d944fde90d79e5c1499f8e494ad7e",
+      "expect": [
+        {
+          "status": 404,
+          "code": "NOT_FOUND",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.revoke.200",
+      "sha256": "45cee34f50795f12466ac74021d4a002d7df83c04f171c9115486b74d89af7a6",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "revoked_at",
+            "revoked_reason"
+          ],
+          "body_lacks": [
+            "token"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "keys.revoke.again.200",
+      "sha256": "dcf7c008df8858446983dbf21cb29d5a41bd429aa99615d4a34b87cb54ced697",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "revoked_at",
+            "revoked_reason"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ],
+      "note": "the second revoke of the same key; revocation is idempotent and answers the stored row"
+    },
+    {
+      "scenario": "corridors.list.200",
+      "sha256": "3c6d3da6e510b8192f81aec18e4bff096562ab193942664ce891f3ff5a28b5bd",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "data"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "corridors.get.walletCrypto_bankUs.200",
+      "sha256": "2ef2cafcc44d8bbe6bc281987cd50d8658b78c26ed0ecf3bcbc6610222a63eeb",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "composite",
+            "source.allowed_networks",
+            "destination.allowed_networks",
+            "availability_stated",
+            "amount.side",
+            "quotable"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "corridors.get.walletCrypto_cash.200",
+      "sha256": "d2d143000229dc83812a7d94cf0fdc1b200846ff25f5cfb78fe9f8d000ee6ae0",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "composite",
+            "source.allowed_networks",
+            "destination.allowed_networks",
+            "availability_stated",
+            "amount.side",
+            "quotable"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "corridors.get.unknown.404",
+      "sha256": "1ec6bf5e46608ee6d35409a5801b864c48f25106fe5ed30c379912baa33e0f0c",
+      "expect": [
+        {
+          "status": 404,
+          "code": "NOT_FOUND",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "commands.get.reserved.200",
+      "sha256": "f82cfd6a8f0c8ba01bcb18a35ea7de75728427d36119a89b4c9c3bb50cae7471",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "operation",
+            "state",
+            "created_at",
+            "attempts",
+            "poll"
+          ],
+          "body_lacks": [
+            "contradiction"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "commands.get.inflight.200",
+      "sha256": "7bbcc938ed7995dc233fc3725bdf68428df0a8c51b188444f7e85b077c48d152",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "operation",
+            "state",
+            "created_at",
+            "attempts",
+            "poll"
+          ],
+          "body_lacks": [
+            "contradiction"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "commands.get.upstream_unknown.200",
+      "sha256": "46bc03bf8e500893fcdeaba561ed0568526e6f2256e6af7d633e2cd50e606b63",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "operation",
+            "state",
+            "created_at",
+            "attempts",
+            "poll"
+          ],
+          "body_lacks": [
+            "contradiction"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "commands.get.failed_retriable.200",
+      "sha256": "d9ed71817f8cbb8a00c1234afa27bd8bf50f2ec4c56c71504e19c15ef6470c62",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "operation",
+            "state",
+            "created_at",
+            "attempts",
+            "poll"
+          ],
+          "body_lacks": [
+            "contradiction"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "commands.get.failed_terminal.200",
+      "sha256": "0a947982559fe99f8e9960d42b753479f13f1fcfaa361f5a7b72f45ae1cf3be3",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "operation",
+            "state",
+            "created_at",
+            "attempts",
+            "poll"
+          ],
+          "body_lacks": [
+            "contradiction"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "commands.get.needs_operator.200",
+      "sha256": "ac58db2eefea00dfad94de5a5cdf2d7d625a0e8ab18ab7ff09beb239b1649027",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "operation",
+            "state",
+            "created_at",
+            "attempts",
+            "poll"
+          ],
+          "body_lacks": [
+            "contradiction"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "commands.get.completed.contradiction.200",
+      "sha256": "5609268b0b99e1633ad5bf9a4d455ccafc380a17669b5d11522a15ea34d5eb4f",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "contradiction.kind",
+            "contradiction.transaction_oms_id",
+            "contradiction.detected_by",
+            "contradiction.prior_state"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "commands.get.failed_terminal.contradiction.200",
+      "sha256": "d34dad6bf30344e4316706dce2a6643968f2e7f080678e783e008afd5fb0209c",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "contradiction.kind",
+            "contradiction.transaction_oms_id",
+            "contradiction.detected_by",
+            "contradiction.prior_state"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "commands.get.404",
+      "sha256": "2f330bcc19a452fa83d6e8831023936f76722716f10b75d37516a834988af934",
+      "expect": [
+        {
+          "status": 404,
+          "code": "NOT_FOUND",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.201",
+      "sha256": "60a8b454ac0b5891413942bfdcf7ca4e1351fd0cd018310095fb4ac2f50c0202",
+      "expect": [
+        {
+          "status": 201,
+          "code": null,
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Idempotency-Key",
+            "Ferry-Environment"
+          ],
+          "headers_absent": [
+            "Idempotency-Replayed"
+          ],
+          "body_has": [
+            "object",
+            "plan.id",
+            "plan.token",
+            "plan.expires_at",
+            "quote",
+            "command_id"
+          ],
+          "body_lacks": [
+            "meta.remediation"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.replay.201",
+      "sha256": "a8935a0f73901f9dc3581e888029d1c1ba9e0b12d4bc4d2cf0c409a98b2dd329",
+      "expect": [
+        {
+          "status": 201,
+          "code": null,
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Idempotency-Replayed",
+            "Idempotency-Key"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "plan.id",
+            "quote",
+            "meta.remediation"
+          ],
+          "body_lacks": [
+            "plan.token"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.202.then_completed",
+      "sha256": "6c46ee3b49c1b7661ac68f7d5f5af877953961ed7b7ded65974f4b3d63096837",
+      "expect": [
+        {
+          "status": 202,
+          "code": null,
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Retry-After"
+          ],
+          "headers_absent": [
+            "Idempotency-Replayed"
+          ],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "poll",
+            "retry_after_seconds",
+            "last_error.code"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        },
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "poll"
+          ],
+          "body_lacks": [
+            "result"
+          ],
+          "body_equals": {}
+        },
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "result.body"
+          ],
+          "body_lacks": [
+            "result.body.plan.token",
+            "result.body.status"
+          ],
+          "body_equals": {}
+        }
+      ],
+      "constructed": "the third interaction reads a row moved to completed with a response_body produced by an earlier recorded simulate against the same endpoint; no body is hand-written"
+    },
+    {
+      "scenario": "simulate.in_progress.409",
+      "sha256": "c0c50b82cae4a40d45b8ff03feb0a680387a6ea2802347d4515e126f64fcc757",
+      "expect": [
+        {
+          "status": 409,
+          "code": "IDEMPOTENCY_KEY_IN_PROGRESS",
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Retry-After"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.state",
+            "error.details.command_id",
+            "error.retry_after_seconds"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.key_required.400",
+      "sha256": "00623d5c599842e663d50d4ee43bdbe9ace66b27e0c8b3a034f62719a858b454",
+      "expect": [
+        {
+          "status": 400,
+          "code": "IDEMPOTENCY_KEY_REQUIRED",
+          "headers_present": [],
+          "headers_absent": [
+            "Ferry-Command-Id",
+            "Idempotency-Key"
+          ],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.unknown_key.400",
+      "sha256": "d492bc576f3f8cfbfa0672f7acde1c608bd5088a1d95a4fdb12fa5a2ad9e62d3",
+      "expect": [
+        {
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.field"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.corridor_unsupported.422",
+      "sha256": "d8020cdd1af8228b161fe2c3f8bb502aaa90231de38a8395ee31333af3efe390",
+      "expect": [
+        {
+          "status": 422,
+          "code": "CORRIDOR_UNSUPPORTED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.supportedDestinations"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.amount_invalid.422",
+      "sha256": "478ce9e6a7afba9c09bb78c808513dae0bbef3c57ebd083db3582d815e543dd4",
+      "expect": [
+        {
+          "status": 422,
+          "code": "AMOUNT_INVALID",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.reason"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.execution_suspended.403",
+      "sha256": "c528acd92bbb620ec6052b0c06585f724351bcedc172d6d79ef4c461232f47d3",
+      "expect": [
+        {
+          "status": 403,
+          "code": "EXECUTION_SUSPENDED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.reason",
+            "error.details.since"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.upstream_not_configured.503",
+      "sha256": "92ca0187516d0c8c9a2d483e551a78e17b8c7e10fefb46eee74c80446ffbca4c",
+      "expect": [
+        {
+          "status": 503,
+          "code": "UPSTREAM_NOT_CONFIGURED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.quote_rejected.422",
+      "sha256": "26f7dcdc0fdd241371a0c51733812ecc23e201ce5b7018722f051e4a1cdefe66",
+      "expect": [
+        {
+          "status": 422,
+          "code": "QUOTE_REJECTED",
+          "headers_present": [
+            "Ferry-Command-Id"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.upstream_error"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.contract_violation.502",
+      "sha256": "aae7509002fd3550584b575b9b34d5d71ccb298bb1052b58ed351115c6bc2960",
+      "expect": [
+        {
+          "status": 502,
+          "code": "UPSTREAM_CONTRACT_VIOLATION",
+          "headers_present": [
+            "Ferry-Command-Id"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.body_class"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.201.processing",
+      "sha256": "3a94f6ec35e8534de2dceb91c5f9b38fb4611ed979ff98da665a25b635758878",
+      "expect": [
+        {
+          "status": 201,
+          "code": null,
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Idempotency-Key",
+            "Ferry-Environment"
+          ],
+          "headers_absent": [
+            "Idempotency-Replayed"
+          ],
+          "body_has": [
+            "object",
+            "id",
+            "status",
+            "source",
+            "destination",
+            "pricing"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.201.failed_status",
+      "sha256": "37810feedb1a03b7cd151e5663d756f71d0b55813fab9e8e17dd7006768e86ca",
+      "expect": [
+        {
+          "status": 201,
+          "code": null,
+          "headers_present": [
+            "Ferry-Command-Id"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "status"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ],
+      "note": "a 201 carrying a transaction whose own status is failed: FERRY accepted the answer, the transfer did not succeed, and the two are different facts (AC22)"
+    },
+    {
+      "scenario": "execute.replay.201",
+      "sha256": "1512a5f192b56c41307c7a02c696945796b8f262b27157b5ddd60ace940e24fa",
+      "expect": [
+        {
+          "status": 201,
+          "code": null,
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Idempotency-Replayed",
+            "Idempotency-Key"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.202.then_completed",
+      "sha256": "0044b4541cd5bd1c84ea87bfd78f3cdd0b9462f6d74b717aa0e1460378504312",
+      "expect": [
+        {
+          "status": 202,
+          "code": null,
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Retry-After"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "poll",
+            "retry_after_seconds",
+            "last_error.code"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        },
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state"
+          ],
+          "body_lacks": [
+            "result",
+            "transaction_id"
+          ],
+          "body_equals": {}
+        },
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "result.status",
+            "result.body",
+            "transaction_id"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.202.then_needs_operator",
+      "sha256": "54c38a65ef6db70163712a17565a3d32d6ffa032257454484bce9b934dc87b3b",
+      "expect": [
+        {
+          "status": 202,
+          "code": null,
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Retry-After"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "poll"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        },
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        },
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state"
+          ],
+          "body_lacks": [
+            "retry_after_seconds"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.202.replayed",
+      "sha256": "c72d974a46d463ea5a79152a2ff1dd40e41669e3765b4fb8942d1fa9fe9a0ca8",
+      "expect": [
+        {
+          "status": 202,
+          "code": null,
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Idempotency-Replayed",
+            "Retry-After"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "poll",
+            "retry_after_seconds"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.in_progress.409",
+      "sha256": "6650e5acdf7ff52d11d5fc7f816c61d3105329bc2a1e4b103beea263c06186a9",
+      "expect": [
+        {
+          "status": 409,
+          "code": "IDEMPOTENCY_KEY_IN_PROGRESS",
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Retry-After"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.state",
+            "error.details.command_id"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.key_reused.different_request.409",
+      "sha256": "d30d164ffea3c75d55e512c15dd605f29f14e74f669e9984247b6e72b4ef859c",
+      "expect": [
+        {
+          "status": 409,
+          "code": "IDEMPOTENCY_KEY_REUSED",
+          "headers_present": [
+            "Ferry-Command-Id"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.command_id"
+          ],
+          "body_lacks": [],
+          "body_equals": {
+            "error.details.reason": "different_request"
+          }
+        }
+      ]
+    },
+    {
+      "scenario": "execute.key_reused.different_credential.409",
+      "sha256": "750fe0654f61a91899909248390de96790d7dc9d3fb63043cbc4aa66f2cd23b4",
+      "expect": [
+        {
+          "status": 409,
+          "code": "IDEMPOTENCY_KEY_REUSED",
+          "headers_present": [
+            "Ferry-Command-Id"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.command_id"
+          ],
+          "body_lacks": [],
+          "body_equals": {
+            "error.details.reason": "different_credential"
+          }
+        }
+      ],
+      "note": "the replay is made by a second, unlinked sandbox key with the same scopes (CS-7)"
+    },
+    {
+      "scenario": "execute.replay_expired.409",
+      "sha256": "8d80e19c9b56dfd4acf30c95b0c71791f3e69d8b9c76a7c8d1ffdd154af02da3",
+      "expect": [
+        {
+          "status": 409,
+          "code": "IDEMPOTENCY_KEY_REPLAY_EXPIRED",
+          "headers_present": [
+            "Ferry-Command-Id"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.state",
+            "error.details.expired_at",
+            "error.details.remediation",
+            "error.details.command_id"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.command_unresolved.409",
+      "sha256": "b32b33aa97f717c99c64cdf37e97c968d0af1cc0317acd6225caf25fccc1123e",
+      "expect": [
+        {
+          "status": 409,
+          "code": "COMMAND_UNRESOLVED",
+          "headers_present": [
+            "Ferry-Command-Id"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.state",
+            "error.details.remediation",
+            "error.details.command_id"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.upstream_busy.with_command.503",
+      "sha256": "1f36959bb9eedabe586c652b6939906f7bb06c7702e48ed7726a4297088c3d17",
+      "expect": [
+        {
+          "status": 503,
+          "code": "UPSTREAM_BUSY",
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Retry-After"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.command_id",
+            "error.details.state",
+            "error.retry_after_seconds"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        },
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "poll"
+          ],
+          "body_lacks": [
+            "result"
+          ],
+          "body_equals": {}
+        }
+      ],
+      "note": "live, not synthesised: both sends answer Response.not_built, so both attempts are mechanically never-sent and Executor#give_up returns Retriable. CS-7's fallback was not needed."
+    },
+    {
+      "scenario": "execute.upstream_busy.no_command.503",
+      "sha256": "7c0c185a0b0a37909f68c45d505fa5ba5e6c09c93092a739e89a861ce80a0254",
+      "expect": [
+        {
+          "status": 503,
+          "code": "UPSTREAM_BUSY",
+          "headers_present": [],
+          "headers_absent": [
+            "Ferry-Command-Id"
+          ],
+          "body_has": [
+            "error.retry_after_seconds"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.policy_denied.403",
+      "sha256": "47428d01461f170b208f2ed63e107baddcff0a36276df3b3229b49b7504e6ec8",
+      "expect": [
+        {
+          "status": 403,
+          "code": "/^POLICY_/",
+          "headers_present": [
+            "Ferry-Command-Id"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.execution_suspended.403",
+      "sha256": "d90289043c3170b61254d25dc883b03cbec63fdd65725f7dcae521df79d1a41b",
+      "expect": [
+        {
+          "status": 403,
+          "code": "EXECUTION_SUSPENDED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.reason"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.plan_key_mismatch.403",
+      "sha256": "edf60e6e4ddd21def1ed11d22d2f00a3f895a0ba070f43e8e1b4343ec2dd0048",
+      "expect": [
+        {
+          "status": 403,
+          "code": "PLAN_KEY_MISMATCH",
+          "headers_present": [],
+          "headers_absent": [
+            "Ferry-Command-Id"
+          ],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.plan_already_used.409",
+      "sha256": "67a8f9d042569166b02a7b68a818ce7fdc9ccdd3968c0f739af62c2df28a491b",
+      "expect": [
+        {
+          "status": 409,
+          "code": "PLAN_ALREADY_USED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.plan_changed.409",
+      "sha256": "c55b75f82ef95e5bb550cd0fee25ff09d5a6c916cc4116d7f6935107b5d2f69f",
+      "expect": [
+        {
+          "status": 409,
+          "code": "PLAN_CHANGED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.diff"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.plan_expired.410",
+      "sha256": "1cbece4a4cc852918298f18d8b8a3a2f4077f31484e83a2b43eb4c5052dd284a",
+      "expect": [
+        {
+          "status": 410,
+          "code": "PLAN_EXPIRED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.plan_not_found.404",
+      "sha256": "c6212b16e20b1fdb355c103d3eb72deb71fdb29f7bc689f338c446efdfef78b3",
+      "expect": [
+        {
+          "status": 404,
+          "code": "PLAN_NOT_FOUND",
+          "headers_present": [],
+          "headers_absent": [
+            "Ferry-Command-Id"
+          ],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.contract_violation.502",
+      "sha256": "23b85d8953506f7380e5e02d70642d0e66d09708381cb3324eaea618c3ad03d2",
+      "expect": [
+        {
+          "status": 502,
+          "code": "UPSTREAM_CONTRACT_VIOLATION",
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Idempotency-Replayed"
+          ],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ],
+      "constructed": "a failed_terminal row seeded with the ledger builders and replayed; §5.10 names this the route for rows the scripted gateway cannot reach from the request path"
+    },
+    {
+      "scenario": "execute.upstream_unavailable.503",
+      "sha256": "ebcbae53769435ad68cb5ab760c80657cc0a9bbde5a532992c9489bdb74d77e5",
+      "expect": [
+        {
+          "status": 503,
+          "code": "UPSTREAM_UNAVAILABLE",
+          "headers_present": [
+            "Ferry-Command-Id",
+            "Idempotency-Replayed"
+          ],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ],
+      "constructed": "a failed_terminal row seeded with the ledger builders and replayed (§5.10); the scripted gateway cannot reach this row from the request path"
+    },
+    {
+      "scenario": "execute.upstream_not_configured.503",
+      "sha256": "a9b9bf8d7e4ff5acde313fd6092a2efd9e24e9861a208f778ee90fbf3c06a254",
+      "expect": [
+        {
+          "status": 503,
+          "code": "UPSTREAM_NOT_CONFIGURED",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.internal_error.500",
+      "sha256": "5b4d53a47573155ee64fef69e17c79670bcb346ef7bdeafaf0fc7c3a1bfa3cc6",
+      "expect": [
+        {
+          "status": 500,
+          "code": "INTERNAL_ERROR",
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "error.request_id"
+          ],
+          "body_lacks": [
+            "error.details"
+          ],
+          "body_equals": {}
+        }
+      ],
+      "note": "produced by the documented else arm of render_command_result: a result class the controller cannot render is an opaque 500, because the command may have executed"
+    },
+    {
+      "scenario": "commands.get.completed.200",
+      "sha256": "0ba758612ea32d4395fe3cfa0aa48d2e45a0d8e406a22a92e8a463d4c8580e36",
+      "expect": [
+        {
+          "status": 200,
+          "code": null,
+          "headers_present": [],
+          "headers_absent": [],
+          "body_has": [
+            "object",
+            "id",
+            "state",
+            "result.status",
+            "result.body",
+            "transaction_id",
+            "idempotency_key"
+          ],
+          "body_lacks": [
+            "retry_after_seconds",
+            "contradiction"
+          ],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "simulate.rate_limited.429",
+      "sha256": "a9d7f37693369be8e97c30097e80cb9a6a36a2fd0262d8b14ac7299618ddb6fe",
+      "expect": [
+        {
+          "status": 429,
+          "code": "RATE_LIMITED",
+          "headers_present": [
+            "Retry-After"
+          ],
+          "headers_absent": [],
+          "body_has": [
+            "error.details.bucket",
+            "error.retry_after_seconds"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ]
+    },
+    {
+      "scenario": "execute.service_unavailable.503",
+      "sha256": "a7b0a9ad8a200a02ff721a670c01f3c0b46f7bbebd0fdde31643c0286982add1",
+      "expect": [
+        {
+          "status": 503,
+          "code": "SERVICE_UNAVAILABLE",
+          "headers_present": [],
+          "headers_absent": [
+            "Ferry-Command-Id"
+          ],
+          "body_has": [
+            "error.retry_after_seconds"
+          ],
+          "body_lacks": [],
+          "body_equals": {}
+        }
+      ],
+      "note": "the counter store is unreachable, so the money budget fails closed in middleware, ahead of routing; nothing about the request itself is wrong"
+    }
+  ],
+  "unreachable": [
+    {
+      "scenario": "execute.destination_too_new.403",
+      "reason": "No HTTP path supplies destination_usable_after (§1.2.7, CRITIQUE M6). The Go row is asserted from the decision table alone (AC19, AC20) and the code is marked unreachable there."
+    },
+    {
+      "scenario": "UPSTREAM_CREDENTIALS_INVALID",
+      "reason": "Declared unreachable from the request path in §5.10; no recording is produced for it."
+    },
+    {
+      "scenario": "UPSTREAM_AUTH_UNAVAILABLE",
+      "reason": "Declared unreachable from the request path in §5.10; no recording is produced for it."
+    }
+  ]
+}

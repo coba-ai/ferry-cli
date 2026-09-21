@@ -1,0 +1,59 @@
+{
+  "scenario": "keys.create.expires_beyond_ceiling.400",
+  "expect": [
+    {
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.fields"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/api_keys",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "personal_access_token"
+        },
+        "body": {
+          "name": "cli-recorded-key",
+          "environment": "sandbox",
+          "scopes": [
+            "read"
+          ],
+          "expires_at": "TIMESTAMP_PLACEHOLDER_1"
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {},
+        "body": {
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "The request is not valid.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "fields": [
+                {
+                  "field": "expires_at",
+                  "code": "invalid",
+                  "message": "expires_at TIMESTAMP_PLACEHOLDER_2 is beyond the maximum lifetime for this credential (365 days, so no later than TIMESTAMP_PLACEHOLDER_3)"
+                }
+              ]
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/VALIDATION_FAILED"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "scenario": "me.api_key.200",
+  "expect": [
+    {
+      "status": 200,
+      "code": null,
+      "headers_present": [
+        "Ferry-Environment"
+      ],
+      "headers_absent": [
+        "Ferry-Command-Id",
+        "Idempotency-Replayed",
+        "WWW-Authenticate"
+      ],
+      "body_has": [
+        "object",
+        "kind",
+        "organization.id",
+        "organization.status",
+        "environment.id",
+        "environment.kind",
+        "credential.id",
+        "credential.scopes",
+        "credential.token_prefix"
+      ],
+      "body_lacks": [
+        "user",
+        "role"
+      ],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/me",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "object": "principal",
+          "kind": "api_key",
+          "organization": {
+            "id": "org_PLACEHOLDER_1",
+            "name": "ORG_NAME_PLACEHOLDER_1",
+            "slug": "ORG_SLUG_PLACEHOLDER_1",
+            "status": "active"
+          },
+          "environment": {
+            "id": "env_PLACEHOLDER_1",
+            "kind": "sandbox",
+            "status": "active"
+          },
+          "credential": {
+            "id": "key_PLACEHOLDER_1",
+            "name": "cli-recorded-key",
+            "token_prefix": "TOKEN_PREFIX_PLACEHOLDER_1",
+            "token_last4": "TOKEN_LAST4_PLACEHOLDER_1",
+            "scopes": [
+              "read"
+            ],
+            "expires_at": "TIMESTAMP_PLACEHOLDER_1",
+            "last_used_at": "TIMESTAMP_PLACEHOLDER_2"
+          },
+          "user": null,
+          "role": null,
+          "environments": []
+        }
+      }
+    }
+  ]
+}

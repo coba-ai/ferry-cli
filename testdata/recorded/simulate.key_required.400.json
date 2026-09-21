@@ -1,0 +1,69 @@
+{
+  "scenario": "simulate.key_required.400",
+  "expect": [
+    {
+      "status": 400,
+      "code": "IDEMPOTENCY_KEY_REQUIRED",
+      "headers_present": [],
+      "headers_absent": [
+        "Ferry-Command-Id",
+        "Idempotency-Key"
+      ],
+      "body_has": [],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers/simulate",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "customer_id": "cst_PLACEHOLDER_1",
+          "source": {
+            "type": "walletCrypto",
+            "id": "wlt_PLACEHOLDER_1",
+            "asset": "usdc",
+            "network": "polygon"
+          },
+          "destination": {
+            "type": "bankUs",
+            "id": "ext_PLACEHOLDER_1",
+            "asset": "usd",
+            "network": "ach",
+            "account_holder": "customer"
+          },
+          "amount": {
+            "side": "source",
+            "value": "100.00"
+          },
+          "metadata": {
+            "order_id": "order_PLACEHOLDER_1"
+          }
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "IDEMPOTENCY_KEY_REQUIRED",
+            "message": "Send an Idempotency-Key header with this request.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": null,
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/IDEMPOTENCY_KEY_REQUIRED"
+          }
+        }
+      }
+    }
+  ]
+}

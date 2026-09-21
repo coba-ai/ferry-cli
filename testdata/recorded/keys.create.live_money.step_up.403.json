@@ -1,0 +1,55 @@
+{
+  "scenario": "keys.create.live_money.step_up.403",
+  "expect": [
+    {
+      "status": 403,
+      "code": "STEP_UP_REQUIRED",
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/api_keys",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "personal_access_token"
+        },
+        "body": {
+          "name": "cli-recorded-key",
+          "environment": "live",
+          "scopes": [
+            "read",
+            "money:execute"
+          ]
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {},
+        "body": {
+          "error": {
+            "code": "STEP_UP_REQUIRED",
+            "message": "This operation requires step-up authentication.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "environment": "live",
+              "scopes": [
+                "money:execute"
+              ],
+              "reason": "step_up_not_available"
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/STEP_UP_REQUIRED"
+          }
+        }
+      }
+    }
+  ]
+}

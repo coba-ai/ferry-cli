@@ -1,0 +1,87 @@
+{
+  "scenario": "keys.list.page1.200",
+  "expect": [
+    {
+      "status": 200,
+      "code": null,
+      "headers_present": [],
+      "headers_absent": [
+        "Ferry-Environment"
+      ],
+      "body_has": [
+        "object",
+        "data",
+        "has_more",
+        "next_cursor",
+        "limit"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/api_keys?limit=2",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "personal_access_token"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {},
+        "body": {
+          "object": "list",
+          "data": [
+            {
+              "object": "api_key",
+              "id": "key_PLACEHOLDER_1",
+              "name": "cli-recorded-key",
+              "environment": {
+                "id": "env_PLACEHOLDER_1",
+                "kind": "sandbox"
+              },
+              "scopes": [
+                "read"
+              ],
+              "token_prefix": "TOKEN_PREFIX_PLACEHOLDER_1",
+              "token_last4": "TOKEN_LAST4_PLACEHOLDER_1",
+              "expires_at": "TIMESTAMP_PLACEHOLDER_1",
+              "created_at": "TIMESTAMP_PLACEHOLDER_2",
+              "last_used_at": null,
+              "revoked_at": null,
+              "revoked_reason": null,
+              "created_by": "usr_PLACEHOLDER_1"
+            },
+            {
+              "object": "api_key",
+              "id": "key_PLACEHOLDER_2",
+              "name": "cli-recorded-key",
+              "environment": {
+                "id": "env_PLACEHOLDER_1",
+                "kind": "sandbox"
+              },
+              "scopes": [
+                "read"
+              ],
+              "token_prefix": "TOKEN_PREFIX_PLACEHOLDER_2",
+              "token_last4": "TOKEN_LAST4_PLACEHOLDER_2",
+              "expires_at": "TIMESTAMP_PLACEHOLDER_3",
+              "created_at": "TIMESTAMP_PLACEHOLDER_4",
+              "last_used_at": null,
+              "revoked_at": null,
+              "revoked_reason": null,
+              "created_by": "usr_PLACEHOLDER_1"
+            }
+          ],
+          "has_more": true,
+          "next_cursor": "CURSOR_PLACEHOLDER_1",
+          "limit": 2
+        }
+      }
+    }
+  ]
+}

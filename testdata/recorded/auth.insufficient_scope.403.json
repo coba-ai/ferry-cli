@@ -1,0 +1,72 @@
+{
+  "scenario": "auth.insufficient_scope.403",
+  "expect": [
+    {
+      "status": 403,
+      "code": "INSUFFICIENT_SCOPE",
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.required_scopes"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers/simulate",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "customer_id": "cst_PLACEHOLDER_1",
+          "source": {
+            "type": "walletCrypto",
+            "id": "wlt_PLACEHOLDER_1",
+            "asset": "usdc",
+            "network": "polygon"
+          },
+          "destination": {
+            "type": "bankUs",
+            "id": "ext_PLACEHOLDER_1",
+            "asset": "usd",
+            "network": "ach",
+            "account_holder": "customer"
+          },
+          "amount": {
+            "side": "source",
+            "value": "100.00"
+          },
+          "metadata": {
+            "order_id": "order_PLACEHOLDER_1"
+          }
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "INSUFFICIENT_SCOPE",
+            "message": "This token lacks a scope this operation requires.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "required_scopes": [
+                "money:simulate"
+              ]
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/INSUFFICIENT_SCOPE"
+          }
+        }
+      }
+    }
+  ]
+}

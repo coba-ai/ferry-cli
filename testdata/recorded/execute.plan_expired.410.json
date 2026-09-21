@@ -1,0 +1,49 @@
+{
+  "scenario": "execute.plan_expired.410",
+  "expect": [
+    {
+      "status": 410,
+      "code": "PLAN_EXPIRED",
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 410,
+        "headers": {
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "PLAN_EXPIRED",
+            "message": "This plan has expired. Simulate again for a new one.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "expired_at": "TIMESTAMP_PLACEHOLDER_1"
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/PLAN_EXPIRED"
+          }
+        }
+      }
+    }
+  ]
+}

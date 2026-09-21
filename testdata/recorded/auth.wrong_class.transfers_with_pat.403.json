@@ -1,0 +1,50 @@
+{
+  "scenario": "auth.wrong_class.transfers_with_pat.403",
+  "expect": [
+    {
+      "status": 403,
+      "code": "WRONG_TOKEN_CLASS",
+      "headers_present": [],
+      "headers_absent": [
+        "Ferry-Command-Id"
+      ],
+      "body_has": [],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "personal_access_token"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {},
+        "body": {
+          "error": {
+            "code": "WRONG_TOKEN_CLASS",
+            "message": "This endpoint does not accept this kind of credential.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "accepted": [
+                "api_key"
+              ]
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/WRONG_TOKEN_CLASS"
+          }
+        }
+      }
+    }
+  ]
+}

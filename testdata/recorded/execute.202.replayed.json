@@ -1,0 +1,71 @@
+{
+  "scenario": "execute.202.replayed",
+  "expect": [
+    {
+      "status": 202,
+      "code": null,
+      "headers_present": [
+        "Ferry-Command-Id",
+        "Idempotency-Replayed",
+        "Retry-After"
+      ],
+      "headers_absent": [],
+      "body_has": [
+        "object",
+        "id",
+        "state",
+        "poll",
+        "retry_after_seconds"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "Ferry-Command-Id": "cmd_PLACEHOLDER_1",
+          "Idempotency-Replayed": "true",
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Retry-After": "5",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "object": "command",
+          "id": "cmd_PLACEHOLDER_1",
+          "operation": "transfers_execute",
+          "state": "upstream_unknown",
+          "created_at": "TIMESTAMP_PLACEHOLDER_1",
+          "state_changed_at": "TIMESTAMP_PLACEHOLDER_2",
+          "attempts": 1,
+          "poll": "/v1/commands/cmd_PLACEHOLDER_1",
+          "retry_after_seconds": 5,
+          "result": null,
+          "last_error": {
+            "code": "UPSTREAM_UNKNOWN",
+            "category": "unknown",
+            "body_class": "other",
+            "rejection_shaped": false,
+            "retry_after_seconds": 9
+          },
+          "contradiction": null,
+          "transaction_id": null,
+          "idempotency_key": "IDEMPOTENCY_KEY_PLACEHOLDER_1"
+        }
+      }
+    }
+  ]
+}

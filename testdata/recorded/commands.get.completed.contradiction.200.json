@@ -1,0 +1,66 @@
+{
+  "scenario": "commands.get.completed.contradiction.200",
+  "expect": [
+    {
+      "status": 200,
+      "code": null,
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "object",
+        "id",
+        "state",
+        "contradiction.kind",
+        "contradiction.transaction_oms_id",
+        "contradiction.detected_by",
+        "contradiction.prior_state"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/commands/cmd_PLACEHOLDER_1",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "object": "command",
+          "id": "cmd_PLACEHOLDER_1",
+          "operation": "transfers_execute",
+          "state": "completed",
+          "created_at": "TIMESTAMP_PLACEHOLDER_1",
+          "state_changed_at": "TIMESTAMP_PLACEHOLDER_2",
+          "attempts": 0,
+          "poll": "/v1/commands/cmd_PLACEHOLDER_1",
+          "retry_after_seconds": null,
+          "result": {
+            "status": 201,
+            "body": null
+          },
+          "last_error": null,
+          "contradiction": {
+            "kind": "second_transaction",
+            "detected_at": "TIMESTAMP_PLACEHOLDER_3",
+            "detected_by": "recovery",
+            "prior_state": "completed",
+            "transaction_oms_id": "txn_PLACEHOLDER_1"
+          },
+          "transaction_id": "txn_PLACEHOLDER_2",
+          "idempotency_key": "IDEMPOTENCY_KEY_PLACEHOLDER_1"
+        }
+      }
+    }
+  ]
+}

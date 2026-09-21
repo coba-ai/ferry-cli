@@ -1,0 +1,52 @@
+{
+  "scenario": "execute.service_unavailable.503",
+  "expect": [
+    {
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE",
+      "headers_present": [],
+      "headers_absent": [
+        "Ferry-Command-Id"
+      ],
+      "body_has": [
+        "error.retry_after_seconds"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 503,
+        "headers": {
+          "Retry-After": "5"
+        },
+        "body": {
+          "error": {
+            "code": "SERVICE_UNAVAILABLE",
+            "message": "Rate limiting is temporarily unavailable, so this operation is not being accepted. Retry shortly.",
+            "retriable": true,
+            "retry_after_seconds": 5,
+            "details": {
+              "reason": "counter_unavailable"
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/SERVICE_UNAVAILABLE"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "scenario": "execute.upstream_busy.no_command.503",
+  "expect": [
+    {
+      "status": 503,
+      "code": "UPSTREAM_BUSY",
+      "headers_present": [],
+      "headers_absent": [
+        "Ferry-Command-Id"
+      ],
+      "body_has": [
+        "error.retry_after_seconds"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 503,
+        "headers": {
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Retry-After": "7",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "UPSTREAM_BUSY",
+            "message": "The upstream service could not be reached. Retry after the interval in the Retry-After header.",
+            "retriable": true,
+            "retry_after_seconds": 7,
+            "details": null,
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/UPSTREAM_BUSY"
+          }
+        }
+      }
+    }
+  ]
+}

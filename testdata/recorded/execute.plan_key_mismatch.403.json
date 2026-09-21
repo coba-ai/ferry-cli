@@ -1,0 +1,49 @@
+{
+  "scenario": "execute.plan_key_mismatch.403",
+  "expect": [
+    {
+      "status": 403,
+      "code": "PLAN_KEY_MISMATCH",
+      "headers_present": [],
+      "headers_absent": [
+        "Ferry-Command-Id"
+      ],
+      "body_has": [],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "PLAN_KEY_MISMATCH",
+            "message": "This plan was not issued to this credential.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": null,
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/PLAN_KEY_MISMATCH"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "scenario": "keys.create.unknown_key.400",
+  "expect": [
+    {
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.fields"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/api_keys",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "personal_access_token"
+        },
+        "body": {
+          "name": "cli-recorded-key",
+          "environment": "sandbox",
+          "scope": [
+            "read"
+          ]
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {},
+        "body": {
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "The request is not valid.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "fields": [
+                {
+                  "field": "scope",
+                  "code": "unknown",
+                  "message": "Unknown parameter."
+                }
+              ]
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/VALIDATION_FAILED"
+          }
+        }
+      }
+    }
+  ]
+}

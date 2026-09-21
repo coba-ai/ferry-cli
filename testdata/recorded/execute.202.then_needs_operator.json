@@ -1,0 +1,174 @@
+{
+  "scenario": "execute.202.then_needs_operator",
+  "expect": [
+    {
+      "status": 202,
+      "code": null,
+      "headers_present": [
+        "Ferry-Command-Id",
+        "Retry-After"
+      ],
+      "headers_absent": [],
+      "body_has": [
+        "object",
+        "id",
+        "state",
+        "poll"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    },
+    {
+      "status": 200,
+      "code": null,
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "object",
+        "id",
+        "state"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    },
+    {
+      "status": 200,
+      "code": null,
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "object",
+        "id",
+        "state"
+      ],
+      "body_lacks": [
+        "retry_after_seconds"
+      ],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "Ferry-Command-Id": "cmd_PLACEHOLDER_1",
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Retry-After": "9",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "object": "command",
+          "id": "cmd_PLACEHOLDER_1",
+          "operation": "transfers_execute",
+          "state": "upstream_unknown",
+          "created_at": "TIMESTAMP_PLACEHOLDER_1",
+          "state_changed_at": "TIMESTAMP_PLACEHOLDER_2",
+          "attempts": 1,
+          "poll": "/v1/commands/cmd_PLACEHOLDER_1",
+          "retry_after_seconds": 9,
+          "result": null,
+          "last_error": {
+            "code": "UPSTREAM_UNKNOWN",
+            "category": "unknown",
+            "body_class": "other",
+            "rejection_shaped": false,
+            "retry_after_seconds": 9
+          },
+          "contradiction": null,
+          "transaction_id": null,
+          "idempotency_key": "IDEMPOTENCY_KEY_PLACEHOLDER_1"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/commands/cmd_PLACEHOLDER_1",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "object": "command",
+          "id": "cmd_PLACEHOLDER_1",
+          "operation": "transfers_execute",
+          "state": "upstream_unknown",
+          "created_at": "TIMESTAMP_PLACEHOLDER_3",
+          "state_changed_at": "TIMESTAMP_PLACEHOLDER_4",
+          "attempts": 1,
+          "poll": "/v1/commands/cmd_PLACEHOLDER_1",
+          "retry_after_seconds": 5,
+          "result": null,
+          "last_error": {
+            "code": "UPSTREAM_UNKNOWN",
+            "category": "unknown",
+            "body_class": "other",
+            "rejection_shaped": false,
+            "retry_after_seconds": 9
+          },
+          "contradiction": null,
+          "transaction_id": null,
+          "idempotency_key": "IDEMPOTENCY_KEY_PLACEHOLDER_1"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/commands/cmd_PLACEHOLDER_1",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "object": "command",
+          "id": "cmd_PLACEHOLDER_1",
+          "operation": "transfers_execute",
+          "state": "needs_operator",
+          "created_at": "TIMESTAMP_PLACEHOLDER_5",
+          "state_changed_at": "TIMESTAMP_PLACEHOLDER_6",
+          "attempts": 1,
+          "poll": "/v1/commands/cmd_PLACEHOLDER_1",
+          "retry_after_seconds": null,
+          "result": null,
+          "last_error": {
+            "code": "UPSTREAM_UNKNOWN",
+            "category": "unknown",
+            "body_class": "other",
+            "rejection_shaped": false,
+            "retry_after_seconds": 9
+          },
+          "contradiction": null,
+          "transaction_id": null,
+          "idempotency_key": "IDEMPOTENCY_KEY_PLACEHOLDER_1"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "scenario": "auth.token_missing.401",
+  "expect": [
+    {
+      "status": 401,
+      "code": "TOKEN_MISSING",
+      "headers_present": [
+        "WWW-Authenticate"
+      ],
+      "headers_absent": [],
+      "body_has": [
+        "error.request_id"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/me",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": null
+        },
+        "body": null
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "WWW-Authenticate": "Bearer realm=\"ferry\""
+        },
+        "body": {
+          "error": {
+            "code": "TOKEN_MISSING",
+            "message": "Authenticate with a bearer token in the Authorization header.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": null,
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/TOKEN_MISSING"
+          }
+        }
+      }
+    }
+  ]
+}

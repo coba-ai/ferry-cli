@@ -1,0 +1,78 @@
+{
+  "scenario": "simulate.corridor_unsupported.422",
+  "expect": [
+    {
+      "status": 422,
+      "code": "CORRIDOR_UNSUPPORTED",
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.supportedDestinations"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers/simulate",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "customer_id": "cst_PLACEHOLDER_1",
+          "source": {
+            "type": "card",
+            "id": "crd_PLACEHOLDER_1",
+            "asset": "usd"
+          },
+          "destination": {
+            "type": "cash",
+            "asset": "usd",
+            "cash_location_id": "csh_PLACEHOLDER_1",
+            "cash_location_reference": "ref"
+          },
+          "amount": {
+            "side": "source",
+            "value": "100.00"
+          },
+          "metadata": {
+            "order_id": "order_PLACEHOLDER_1"
+          }
+        }
+      },
+      "response": {
+        "status": 422,
+        "headers": {
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "CORRIDOR_UNSUPPORTED",
+            "message": "This API does not quote transfers between these two instrument types.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "source": "card",
+              "destination": "cash",
+              "supportedDestinations": [
+                "walletCrypto",
+                "walletExternal",
+                "bankUs",
+                "bankIban",
+                "bankCanada",
+                "card"
+              ]
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/CORRIDOR_UNSUPPORTED"
+          }
+        }
+      }
+    }
+  ]
+}

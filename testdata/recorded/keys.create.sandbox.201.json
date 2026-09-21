@@ -1,0 +1,71 @@
+{
+  "scenario": "keys.create.sandbox.201",
+  "expect": [
+    {
+      "status": 201,
+      "code": null,
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "object",
+        "id",
+        "token",
+        "token_prefix",
+        "token_last4",
+        "environment.kind",
+        "scopes",
+        "expires_at"
+      ],
+      "body_lacks": [
+        "revoked_at"
+      ],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/api_keys",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "personal_access_token"
+        },
+        "body": {
+          "name": "cli-recorded-key",
+          "environment": "sandbox",
+          "scopes": [
+            "read",
+            "money:simulate"
+          ]
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {},
+        "body": {
+          "object": "api_key",
+          "id": "key_PLACEHOLDER_1",
+          "name": "cli-recorded-key",
+          "environment": {
+            "id": "env_PLACEHOLDER_1",
+            "kind": "sandbox"
+          },
+          "scopes": [
+            "money:simulate",
+            "read"
+          ],
+          "token_prefix": "TOKEN_PREFIX_PLACEHOLDER_1",
+          "token_last4": "TOKEN_LAST4_PLACEHOLDER_1",
+          "expires_at": "TIMESTAMP_PLACEHOLDER_1",
+          "created_at": "TIMESTAMP_PLACEHOLDER_2",
+          "last_used_at": null,
+          "revoked_at": null,
+          "revoked_reason": null,
+          "created_by": "usr_PLACEHOLDER_1",
+          "token": "API_KEY_TOKEN_PLACEHOLDER_1"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "scenario": "simulate.execution_suspended.403",
+  "expect": [
+    {
+      "status": 403,
+      "code": "EXECUTION_SUSPENDED",
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.reason",
+        "error.details.since"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers/simulate",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "customer_id": "cst_PLACEHOLDER_1",
+          "source": {
+            "type": "walletCrypto",
+            "id": "wlt_PLACEHOLDER_1",
+            "asset": "usdc",
+            "network": "polygon"
+          },
+          "destination": {
+            "type": "bankUs",
+            "id": "ext_PLACEHOLDER_1",
+            "asset": "usd",
+            "network": "ach",
+            "account_holder": "customer"
+          },
+          "amount": {
+            "side": "source",
+            "value": "100.00"
+          },
+          "metadata": {
+            "order_id": "order_PLACEHOLDER_1"
+          }
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "EXECUTION_SUSPENDED",
+            "message": "Execution is suspended for this environment.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "reason": "ledger_migration_failed",
+              "since": "TIMESTAMP_PLACEHOLDER_1"
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/EXECUTION_SUSPENDED"
+          }
+        }
+      }
+    }
+  ]
+}

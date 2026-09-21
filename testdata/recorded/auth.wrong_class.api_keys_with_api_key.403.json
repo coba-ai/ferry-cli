@@ -1,0 +1,50 @@
+{
+  "scenario": "auth.wrong_class.api_keys_with_api_key.403",
+  "expect": [
+    {
+      "status": 403,
+      "code": "WRONG_TOKEN_CLASS",
+      "headers_present": [],
+      "headers_absent": [
+        "WWW-Authenticate"
+      ],
+      "body_has": [],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/api_keys",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "WRONG_TOKEN_CLASS",
+            "message": "This endpoint does not accept this kind of credential.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "accepted": [
+                "personal_access_token"
+              ]
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/WRONG_TOKEN_CLASS"
+          }
+        }
+      }
+    }
+  ]
+}

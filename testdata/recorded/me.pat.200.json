@@ -1,0 +1,83 @@
+{
+  "scenario": "me.pat.200",
+  "expect": [
+    {
+      "status": 200,
+      "code": null,
+      "headers_present": [],
+      "headers_absent": [
+        "Ferry-Environment",
+        "WWW-Authenticate"
+      ],
+      "body_has": [
+        "object",
+        "kind",
+        "organization.slug",
+        "user.email",
+        "credential.scopes",
+        "environments"
+      ],
+      "body_lacks": [
+        "environment"
+      ],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/me",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "personal_access_token"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {},
+        "body": {
+          "object": "principal",
+          "kind": "personal_access_token",
+          "organization": {
+            "id": "org_PLACEHOLDER_1",
+            "name": "ORG_NAME_PLACEHOLDER_1",
+            "slug": "ORG_SLUG_PLACEHOLDER_1",
+            "status": "active"
+          },
+          "environment": null,
+          "credential": {
+            "id": "pat_PLACEHOLDER_1",
+            "name": "cli-recorded-token",
+            "token_prefix": "TOKEN_PREFIX_PLACEHOLDER_1",
+            "token_last4": "TOKEN_LAST4_PLACEHOLDER_1",
+            "scopes": [
+              "read",
+              "keys:manage"
+            ],
+            "expires_at": "TIMESTAMP_PLACEHOLDER_1",
+            "last_used_at": "TIMESTAMP_PLACEHOLDER_2"
+          },
+          "user": {
+            "id": "usr_PLACEHOLDER_1",
+            "email": "EMAIL_PLACEHOLDER_1"
+          },
+          "role": "owner",
+          "environments": [
+            {
+              "id": "env_PLACEHOLDER_1",
+              "kind": "sandbox",
+              "status": "active"
+            },
+            {
+              "id": "env_PLACEHOLDER_2",
+              "kind": "live",
+              "status": "active"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

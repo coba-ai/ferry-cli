@@ -1,0 +1,60 @@
+{
+  "scenario": "execute.replay_expired.409",
+  "expect": [
+    {
+      "status": 409,
+      "code": "IDEMPOTENCY_KEY_REPLAY_EXPIRED",
+      "headers_present": [
+        "Ferry-Command-Id"
+      ],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.state",
+        "error.details.expired_at",
+        "error.details.remediation",
+        "error.details.command_id"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 409,
+        "headers": {
+          "Ferry-Command-Id": "cmd_PLACEHOLDER_1",
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "IDEMPOTENCY_KEY_REPLAY_EXPIRED",
+            "message": "The stored answer for this Idempotency-Key has expired. The key is never re-executed; use a new one.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "expired_at": "TIMESTAMP_PLACEHOLDER_1",
+              "state": "completed",
+              "command_id": "cmd_PLACEHOLDER_1",
+              "remediation": "Retry with a new Idempotency-Key. This key's stored answer has aged out of the replay window, and a key is never re-executed."
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/IDEMPOTENCY_KEY_REPLAY_EXPIRED"
+          }
+        }
+      }
+    }
+  ]
+}

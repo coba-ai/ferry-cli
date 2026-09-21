@@ -1,0 +1,54 @@
+{
+  "scenario": "execute.contract_violation.502",
+  "expect": [
+    {
+      "status": 502,
+      "code": "UPSTREAM_CONTRACT_VIOLATION",
+      "headers_present": [
+        "Ferry-Command-Id",
+        "Idempotency-Replayed"
+      ],
+      "headers_absent": [],
+      "body_has": [],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 502,
+        "headers": {
+          "Ferry-Command-Id": "cmd_PLACEHOLDER_1",
+          "Idempotency-Replayed": "true",
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "UPSTREAM_CONTRACT_VIOLATION",
+            "message": "The upstream service answered with something this API cannot act on.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "field": "expiresAt"
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/UPSTREAM_CONTRACT_VIOLATION"
+          }
+        }
+      }
+    }
+  ]
+}

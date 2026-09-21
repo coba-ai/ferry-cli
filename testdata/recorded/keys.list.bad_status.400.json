@@ -1,0 +1,52 @@
+{
+  "scenario": "keys.list.bad_status.400",
+  "expect": [
+    {
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.fields"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/api_keys?status=retired",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "personal_access_token"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 400,
+        "headers": {},
+        "body": {
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "The request is not valid.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "fields": [
+                {
+                  "field": "status",
+                  "code": "invalid",
+                  "message": "must be one of active, all"
+                }
+              ]
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/VALIDATION_FAILED"
+          }
+        }
+      }
+    }
+  ]
+}

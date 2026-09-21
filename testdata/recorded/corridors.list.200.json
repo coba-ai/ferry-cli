@@ -1,0 +1,674 @@
+{
+  "scenario": "corridors.list.200",
+  "expect": [
+    {
+      "status": 200,
+      "code": null,
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "object",
+        "data"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/corridors",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "object": "list",
+          "data": [
+            {
+              "object": "corridor",
+              "id": "walletCrypto->walletCrypto",
+              "composite": "cryptoToCrypto",
+              "source": {
+                "type": "walletCrypto",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "destination": {
+                "type": "walletCrypto",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletCrypto->walletExternal",
+              "composite": "cryptoToCrypto",
+              "source": {
+                "type": "walletCrypto",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "destination": {
+                "type": "walletExternal",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletCrypto->bankUs",
+              "composite": "cryptoToFiatAccount",
+              "source": {
+                "type": "walletCrypto",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "destination": {
+                "type": "bankUs",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": [
+                  "ach",
+                  "achSameDay",
+                  "wire"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletCrypto->bankIban",
+              "composite": "cryptoToFiatAccount",
+              "source": {
+                "type": "walletCrypto",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "destination": {
+                "type": "bankIban",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": [
+                  "swift"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletCrypto->bankCanada",
+              "composite": "cryptoToFiatAccount",
+              "source": {
+                "type": "walletCrypto",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "destination": {
+                "type": "bankCanada",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd",
+                  "cad"
+                ],
+                "allowed_networks": [
+                  "swift",
+                  "local"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletCrypto->card",
+              "composite": "cryptoToFiatAccount",
+              "source": {
+                "type": "walletCrypto",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "destination": {
+                "type": "card",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletCrypto->cash",
+              "composite": "cryptoToCash",
+              "source": {
+                "type": "walletCrypto",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "destination": {
+                "type": "cash",
+                "category": "cash",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "destination",
+                "multiple": "20.00",
+                "maximum": "400.00"
+              },
+              "quotable": false,
+              "reason": "CashDestination declares no id property, so Commands::Correlation::TRANSACTION_FIELDS[\"destination.id\"] has nothing to compare and fails closed — a cash payout could move money and never correlate"
+            },
+            {
+              "object": "corridor",
+              "id": "walletFiat->walletCrypto",
+              "composite": "fiatAccountToCrypto",
+              "source": {
+                "type": "walletFiat",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "walletCrypto",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletFiat->walletExternal",
+              "composite": "fiatAccountToCrypto",
+              "source": {
+                "type": "walletFiat",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "walletExternal",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletFiat->bankUs",
+              "composite": "fiatAccountToFiatAccount",
+              "source": {
+                "type": "walletFiat",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "bankUs",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": [
+                  "ach",
+                  "achSameDay",
+                  "wire"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletFiat->bankIban",
+              "composite": "fiatAccountToFiatAccount",
+              "source": {
+                "type": "walletFiat",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "bankIban",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": [
+                  "swift"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletFiat->bankCanada",
+              "composite": "fiatAccountToFiatAccount",
+              "source": {
+                "type": "walletFiat",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "bankCanada",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd",
+                  "cad"
+                ],
+                "allowed_networks": [
+                  "swift",
+                  "local"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "walletFiat->card",
+              "composite": "fiatAccountToFiatAccount",
+              "source": {
+                "type": "walletFiat",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "card",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "card->walletCrypto",
+              "composite": "fiatAccountToCrypto",
+              "source": {
+                "type": "card",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "walletCrypto",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "card->walletExternal",
+              "composite": "fiatAccountToCrypto",
+              "source": {
+                "type": "card",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "walletExternal",
+                "category": "crypto",
+                "allowed_assets": null,
+                "allowed_networks": [
+                  "ethereum",
+                  "polygon",
+                  "base",
+                  "solana",
+                  "tron"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "card->bankUs",
+              "composite": "fiatAccountToFiatAccount",
+              "source": {
+                "type": "card",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "bankUs",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": [
+                  "ach",
+                  "achSameDay",
+                  "wire"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "card->bankIban",
+              "composite": "fiatAccountToFiatAccount",
+              "source": {
+                "type": "card",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "bankIban",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": [
+                  "swift"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "card->bankCanada",
+              "composite": "fiatAccountToFiatAccount",
+              "source": {
+                "type": "card",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "bankCanada",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd",
+                  "cad"
+                ],
+                "allowed_networks": [
+                  "swift",
+                  "local"
+                ]
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            },
+            {
+              "object": "corridor",
+              "id": "card->card",
+              "composite": "fiatAccountToFiatAccount",
+              "source": {
+                "type": "card",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "destination": {
+                "type": "card",
+                "category": "fiatAccount",
+                "allowed_assets": [
+                  "usd"
+                ],
+                "allowed_networks": []
+              },
+              "availability_stated": false,
+              "amount": {
+                "side": "either",
+                "multiple": null,
+                "maximum": null
+              },
+              "quotable": true,
+              "reason": null
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

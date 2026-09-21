@@ -1,0 +1,124 @@
+{
+  "scenario": "commands.get.completed.200",
+  "expect": [
+    {
+      "status": 200,
+      "code": null,
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "object",
+        "id",
+        "state",
+        "result.status",
+        "result.body",
+        "transaction_id",
+        "idempotency_key"
+      ],
+      "body_lacks": [
+        "retry_after_seconds",
+        "contradiction"
+      ],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/commands/cmd_PLACEHOLDER_1",
+        "headers": {
+          "idempotency_key_present": false,
+          "credential_class": "api_key"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "object": "command",
+          "id": "cmd_PLACEHOLDER_1",
+          "operation": "transfers_execute",
+          "state": "completed",
+          "created_at": "TIMESTAMP_PLACEHOLDER_1",
+          "state_changed_at": "TIMESTAMP_PLACEHOLDER_2",
+          "attempts": 1,
+          "poll": "/v1/commands/cmd_PLACEHOLDER_1",
+          "retry_after_seconds": null,
+          "result": {
+            "status": 201,
+            "body": {
+              "id": "txn_PLACEHOLDER_1",
+              "object": "transaction",
+              "source": {
+                "id": "wlt_5h4jzzpr9xre3bamd9ca7qyghn",
+                "type": "walletCrypto",
+                "asset": "usdc",
+                "network": "polygon",
+                "category": "crypto"
+              },
+              "status": "processing",
+              "pricing": {
+                "pair": "usdc/usd",
+                "source": {
+                  "asset": "usdc",
+                  "amountNet": "100.00",
+                  "amountGross": "100.00",
+                  "feesDeducted": {
+                    "gas": "0.00",
+                    "oms": "0.00",
+                    "total": "0.00",
+                    "developer": "0.00"
+                  }
+                },
+                "sponsorGas": true,
+                "destination": {
+                  "asset": "usd",
+                  "amountNet": "100.00",
+                  "amountGross": "100.00",
+                  "feesDeducted": {
+                    "gas": "0.00",
+                    "oms": "0.00",
+                    "total": "0.00",
+                    "developer": "0.00"
+                  }
+                },
+                "exchangeRate": "1.0000",
+                "effectiveRate": "1.0000",
+                "sponsorGasCost": "0.00",
+                "fixedAmountSide": "source"
+              },
+              "metadata": {
+                "orderId": "order_PLACEHOLDER_1"
+              },
+              "createdAt": "TIMESTAMP_PLACEHOLDER_3",
+              "precursor": {
+                "id": "qt_PLACEHOLDER_1",
+                "type": "quote"
+              },
+              "subStatus": "processing.fundsPulled",
+              "updatedAt": "TIMESTAMP_PLACEHOLDER_4",
+              "customerId": "cst_PLACEHOLDER_1",
+              "destination": {
+                "id": "ext_fky491gakzj0dd46qb6whsr2vq",
+                "type": "bankUs",
+                "asset": "usd",
+                "network": "ach",
+                "category": "fiatAccount"
+              },
+              "estimatedArrival": "TIMESTAMP_PLACEHOLDER_5",
+              "sourceToDestination": "cryptoToFiatAccount"
+            }
+          },
+          "last_error": null,
+          "contradiction": null,
+          "transaction_id": "txn_PLACEHOLDER_1",
+          "idempotency_key": "IDEMPOTENCY_KEY_PLACEHOLDER_1"
+        }
+      }
+    }
+  ]
+}

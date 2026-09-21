@@ -1,0 +1,59 @@
+{
+  "scenario": "execute.in_progress.409",
+  "expect": [
+    {
+      "status": 409,
+      "code": "IDEMPOTENCY_KEY_IN_PROGRESS",
+      "headers_present": [
+        "Ferry-Command-Id",
+        "Retry-After"
+      ],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.state",
+        "error.details.command_id"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 409,
+        "headers": {
+          "Ferry-Command-Id": "cmd_PLACEHOLDER_1",
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Retry-After": "1",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "IDEMPOTENCY_KEY_IN_PROGRESS",
+            "message": "This Idempotency-Key names a command that is still running. Poll it or retry after the interval.",
+            "retriable": true,
+            "retry_after_seconds": 1,
+            "details": {
+              "state": "inflight",
+              "retriable": true,
+              "command_id": "cmd_PLACEHOLDER_1"
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/IDEMPOTENCY_KEY_IN_PROGRESS"
+          }
+        }
+      }
+    }
+  ]
+}

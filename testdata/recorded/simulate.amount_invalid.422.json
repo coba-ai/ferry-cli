@@ -1,0 +1,71 @@
+{
+  "scenario": "simulate.amount_invalid.422",
+  "expect": [
+    {
+      "status": 422,
+      "code": "AMOUNT_INVALID",
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.reason"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers/simulate",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "customer_id": "cst_PLACEHOLDER_1",
+          "source": {
+            "type": "walletCrypto",
+            "id": "wlt_PLACEHOLDER_1",
+            "asset": "usdc",
+            "network": "polygon"
+          },
+          "destination": {
+            "type": "bankUs",
+            "id": "ext_PLACEHOLDER_1",
+            "asset": "usd",
+            "network": "ach",
+            "account_holder": "customer"
+          },
+          "amount": {
+            "value": "100.00"
+          },
+          "metadata": {
+            "order_id": "order_PLACEHOLDER_1"
+          }
+        }
+      },
+      "response": {
+        "status": 422,
+        "headers": {
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "AMOUNT_INVALID",
+            "message": "The amount block is not one this corridor can be quoted on.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "reason": "exactly_one_side",
+              "field": "amount.side"
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/AMOUNT_INVALID"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "scenario": "execute.execution_suspended.403",
+  "expect": [
+    {
+      "status": 403,
+      "code": "EXECUTION_SUSPENDED",
+      "headers_present": [],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.reason"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "plan_token": "ferry_plan_PLACEHOLDER"
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "Ferry-Command-Id": "cmd_PLACEHOLDER_1",
+          "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
+          "Ferry-Environment": "sandbox"
+        },
+        "body": {
+          "error": {
+            "code": "EXECUTION_SUSPENDED",
+            "message": "Execution is suspended for this environment.",
+            "retriable": false,
+            "retry_after_seconds": null,
+            "details": {
+              "reason": "ledger_migration_failed",
+              "since": "TIMESTAMP_PLACEHOLDER_1"
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/EXECUTION_SUSPENDED"
+          }
+        }
+      }
+    }
+  ]
+}

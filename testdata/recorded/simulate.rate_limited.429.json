@@ -1,0 +1,75 @@
+{
+  "scenario": "simulate.rate_limited.429",
+  "expect": [
+    {
+      "status": 429,
+      "code": "RATE_LIMITED",
+      "headers_present": [
+        "Retry-After"
+      ],
+      "headers_absent": [],
+      "body_has": [
+        "error.details.bucket",
+        "error.retry_after_seconds"
+      ],
+      "body_lacks": [],
+      "body_equals": {}
+    }
+  ],
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/transfers/simulate",
+        "headers": {
+          "idempotency_key_present": true,
+          "credential_class": "api_key"
+        },
+        "body": {
+          "customer_id": "cst_PLACEHOLDER_1",
+          "source": {
+            "type": "walletCrypto",
+            "id": "wlt_PLACEHOLDER_1",
+            "asset": "usdc",
+            "network": "polygon"
+          },
+          "destination": {
+            "type": "bankUs",
+            "id": "ext_PLACEHOLDER_1",
+            "asset": "usd",
+            "network": "ach",
+            "account_holder": "customer"
+          },
+          "amount": {
+            "side": "source",
+            "value": "100.00"
+          },
+          "metadata": {
+            "order_id": "order_PLACEHOLDER_1"
+          }
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "Retry-After": "60"
+        },
+        "body": {
+          "error": {
+            "code": "RATE_LIMITED",
+            "message": "Too many requests. Retry after the interval in the Retry-After header.",
+            "retriable": true,
+            "retry_after_seconds": 60,
+            "details": {
+              "bucket": "v1/money/principal",
+              "limit": 1,
+              "period": 60
+            },
+            "request_id": "UUID_PLACEHOLDER_1",
+            "docs_url": "https://docs.ferry.example/errors/RATE_LIMITED"
+          }
+        }
+      }
+    }
+  ]
+}
