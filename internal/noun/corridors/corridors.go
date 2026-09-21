@@ -10,8 +10,6 @@
 package corridors
 
 import (
-	"encoding/json"
-
 	"github.com/spf13/cobra"
 
 	"github.com/kurenn/ferry-cli/internal/api"
@@ -29,14 +27,11 @@ func Command(deps noun.Deps) *cobra.Command {
 	return cmd
 }
 
-// List is the list envelope of `GET /v1/corridors`.
+// List is the list envelope of `GET /v1/corridors`, with `Corridor` items.
 //
 // The corridors endpoint answers `{object, data}` with no pagination — every
-// corridor FERRY knows fits in one answer — so this is not the `List` schema
-// the key endpoints use and does not pretend to be.
-type List struct {
-	Object string         `json:"object"`
-	Data   []api.Corridor `json:"data"`
-}
-
-func encode(v any) (json.RawMessage, error) { return json.Marshal(v) }
+// corridor FERRY knows fits in one answer — so this is `api.Collection` and
+// not `api.List`, which is the paginated five-key envelope the key endpoints
+// use. Both now live in `internal/api` and both are pinned to the shape the
+// contract declares for them (A402).
+type List = api.Collection[api.Corridor]

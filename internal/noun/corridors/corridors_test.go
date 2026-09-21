@@ -3,10 +3,12 @@ package corridors_test
 import (
 	"encoding/json"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/kurenn/ferry-cli/internal/api"
+	"github.com/kurenn/ferry-cli/internal/noun/corridors"
 	"github.com/kurenn/ferry-cli/internal/render"
 )
 
@@ -309,5 +311,32 @@ func TestListShowsEveryCorridorTheAnswerCarried(t *testing.T) {
 	if got := strings.Count(stdout, "->"); got != len(doc.Response.Data) {
 		t.Errorf("the text render shows %d corridor ids and the answer carried %d",
 			got, len(doc.Response.Data))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// A402 — `GET /v1/corridors` is read through the unpaginated envelope.
+// ---------------------------------------------------------------------------
+
+// The pins in `internal/api` hold each envelope type to the schema that
+// declares it. Neither holds *this* package to the right envelope, and the
+// gap is not hypothetical: swapping this alias to `api.List[api.Corridor]`
+// was applied and every test in the repository stayed green, because the
+// corridors answer is written through verbatim rather than re-encoded, so
+// nothing renders the three pagination keys the swap invents.
+//
+// This is the assertion that closes it. It names the expected type rather
+// than asserting some property of it, because the property that matters —
+// "the envelope the contract declares for this route" — is exactly what the
+// `internal/api` pin already establishes about `api.Collection`, and what is
+// missing is only the binding from the route to the type.
+func TestTheCorridorListEnvelopeIsTheUnpaginatedOne(t *testing.T) {
+	got := reflect.TypeOf(corridors.List{})
+	want := reflect.TypeOf(api.Collection[api.Corridor]{})
+
+	if got != want {
+		t.Fatalf("corridors reads GET /v1/corridors as %s; the contract answers it with the "+
+			"unpaginated %s, and a paginated envelope here would give a caller a `has_more` "+
+			"and a `next_cursor` no corridor answer carries", got, want)
 	}
 }
