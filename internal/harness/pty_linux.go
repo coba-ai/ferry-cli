@@ -32,12 +32,12 @@ func openPTY() (master, slave *os.File, err error) {
 
 	// TIOCSPTLCK with 0 unlocks the slave; without it the open below fails.
 	var unlock int32
-	if err := ioctl(m.Fd(), syscall.TIOCSPTLCK, uintptr(unsafe.Pointer(&unlock))); err != nil {
+	if err := control(m, syscall.TIOCSPTLCK, uintptr(unsafe.Pointer(&unlock))); err != nil {
 		return nil, nil, fmt.Errorf("unlock pty: %w", err)
 	}
 
 	var n uint32
-	if err := ioctl(m.Fd(), syscall.TIOCGPTN, uintptr(unsafe.Pointer(&n))); err != nil {
+	if err := control(m, syscall.TIOCGPTN, uintptr(unsafe.Pointer(&n))); err != nil {
 		return nil, nil, fmt.Errorf("get pty number: %w", err)
 	}
 
@@ -47,6 +47,36 @@ func openPTY() (master, slave *os.File, err error) {
 		return nil, nil, fmt.Errorf("open %s: %w", name, err)
 	}
 	return m, s, nil
+}
+
+// control runs an ioctl against f's descriptor without taking f out of the
+// runtime poller.
+//
+// `os.File.Fd()` is the obvious way to get the descriptor and the wrong one:
+// it puts the file into blocking mode and unregisters it, which is documented
+// as breaking SetDeadline and, less visibly, breaks Close as well. A Close on
+// an unregistered file cannot interrupt a Read already in flight — it marks
+// the descriptor closed and waits for the read to finish on its own.
+//
+// That is not hypothetical here. `drain` sits in a Read on the master for the
+// whole of Run, and the one recovery path when the slave will not release
+// (A358) is to close the master and expect the read to fail. With `Fd()` that
+// recovery silently does nothing and the wait escalates to a hang, which is
+// what A406 measured before this changed. SyscallConn keeps the file
+// pollable, so Close interrupts the read as intended.
+func control(f *os.File, req, arg uintptr) error {
+	conn, err := f.SyscallConn()
+	if err != nil {
+		return err
+	}
+
+	var inner error
+
+	if err := conn.Control(func(fd uintptr) { inner = ioctl(fd, req, arg) }); err != nil {
+		return err
+	}
+
+	return inner
 }
 
 func ioctl(fd, req, arg uintptr) error {
