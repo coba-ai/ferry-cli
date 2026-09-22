@@ -409,6 +409,12 @@ func TestTheSecretDetectorRecognisesSecretsAndNotTheirPrefixes(t *testing.T) {
 		"ferry_sk_live_" + body,
 		"ferry_pat_" + body,
 		"ferry_plan_abcdefgh",
+		"ferry_sk_sandbox_RecordedCanaryNotARealKeyDoNotUse0000000001",
+
+		// The opaque placeholders the recorder no longer emits for keys.
+		// Kept because recognising a string is cheap and the cost of not
+		// recognising one is a secret-shaped value on stdout: this list is
+		// what the detector can see, not what the fixture happens to hold.
 		"API_KEY_TOKEN_PLACEHOLDER_1",
 		"PAT_TOKEN_PLACEHOLDER_2",
 	}

@@ -29,7 +29,8 @@
         "path": "/v1/api_keys",
         "headers": {
           "idempotency_key_present": false,
-          "credential_class": "personal_access_token"
+          "credential_class": "personal_access_token",
+          "content_type": "application/json"
         },
         "body": {
           "name": "cli-recorded-key",
@@ -42,7 +43,9 @@
       },
       "response": {
         "status": 201,
-        "headers": {},
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8"
+        },
         "body": {
           "object": "api_key",
           "id": "key_PLACEHOLDER_1",
@@ -63,7 +66,7 @@
           "revoked_at": null,
           "revoked_reason": null,
           "created_by": "usr_PLACEHOLDER_1",
-          "token": "API_KEY_TOKEN_PLACEHOLDER_1"
+          "token": "ferry_sk_sandbox_RecordedCanaryNotARealKeyDoNotUse0000000001"
         }
       }
     }

@@ -37,14 +37,16 @@
         "path": "/v1/me",
         "headers": {
           "idempotency_key_present": false,
-          "credential_class": "api_key"
+          "credential_class": "api_key",
+          "content_type": null
         },
         "body": null
       },
       "response": {
         "status": 200,
         "headers": {
-          "Ferry-Environment": "sandbox"
+          "Ferry-Environment": "sandbox",
+          "Content-Type": "application/json; charset=utf-8"
         },
         "body": {
           "object": "principal",

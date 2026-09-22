@@ -28,7 +28,8 @@
         "path": "/v1/transfers",
         "headers": {
           "idempotency_key_present": true,
-          "credential_class": "api_key"
+          "credential_class": "api_key",
+          "content_type": "application/json"
         },
         "body": {
           "plan_token": "ferry_plan_PLACEHOLDER"
@@ -41,7 +42,8 @@
           "Idempotency-Replayed": "true",
           "Idempotency-Key": "IDEMPOTENCY_KEY_PLACEHOLDER_1",
           "Retry-After": "5",
-          "Ferry-Environment": "sandbox"
+          "Ferry-Environment": "sandbox",
+          "Content-Type": "application/json; charset=utf-8"
         },
         "body": {
           "object": "command",

@@ -34,11 +34,19 @@ import (
 
 const canaryBody = "CANARYRENDER00000000000000000000000000000000"
 
-func canaryPAT() string     { return "ferry_pat_" + canaryBody[:43] }
-func canaryKey() string     { return "ferry_sk_sandbox_" + canaryBody[:43] }
-func canaryLive() string    { return "ferry_sk_live_" + canaryBody[:43] }
-func planToken() string     { return "ferry_plan_" + canaryBody[:32] }
-func recorderToken() string { return "API_KEY_TOKEN_PLACEHOLDER_1" }
+func canaryPAT() string  { return "ferry_pat_" + canaryBody[:43] }
+func canaryKey() string  { return "ferry_sk_sandbox_" + canaryBody[:43] }
+func canaryLive() string { return "ferry_sk_live_" + canaryBody[:43] }
+func planToken() string  { return "ferry_plan_" + canaryBody[:32] }
+
+// recorderToken is what the recorder substitutes for a minted key: since
+// A340 a well-shaped canary rather than an opaque placeholder, so that
+// `creds.Put` will store it and `keys create --login` can be driven end to
+// end. Transcribed rather than read out of the recording, because an expected
+// value taken from the file under test passes however that file changes.
+func recorderToken() string {
+	return "ferry_sk_sandbox_RecordedCanaryNotARealKeyDoNotUse0000000001"
+}
 
 // sweep is one command, arranged so it reaches as far into its own path as the
 // fixture allows.

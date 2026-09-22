@@ -535,9 +535,21 @@ func bodyMismatch(recorded json.RawMessage, got []byte) string {
 // `Ferry-Command-Id`, no `Retry-After` and no `Idempotency-Replayed`, and it
 // does not echo the request's `Idempotency-Key` either: a client that reads a
 // command id the API never sent is a client whose polling works only against
-// this fixture. `Content-Type` is the one header set here, because it is the
-// transport's statement about the bytes rather than one of FERRY's answers,
-// and Go would otherwise sniff one.
+// this fixture.
+//
+// `Content-Type` used to be the one exception, set here because the recorder
+// did not capture it and Go would otherwise sniff one. A335 captures it, so
+// the exception is gone and the recorded value wins like every other header.
+// That distinction is not cosmetic: FERRY answers `application/json;
+// charset=utf-8` from a render and a bare `application/json` from the
+// throttling middleware, and inventing the header flattened those two into
+// one. A client that parses the charset off a 429 would have worked here and
+// failed against the API.
+//
+// The fallback survives only for a recording with a body and no media type,
+// which the recorder no longer produces. It is here so that if one ever
+// appears, the answer is a wrong-but-declared type rather than whatever Go
+// sniffs out of the first 512 bytes.
 func writeRecorded(w http.ResponseWriter, resp RecordedResponse) {
 	body := compactJSON(resp.Body)
 
@@ -545,7 +557,7 @@ func writeRecorded(w http.ResponseWriter, resp RecordedResponse) {
 		w.Header().Set(http.CanonicalHeaderKey(name), resp.Headers[name])
 	}
 
-	if len(body) > 0 {
+	if len(body) > 0 && w.Header().Get("Content-Type") == "" {
 		w.Header().Set("Content-Type", "application/json")
 	}
 

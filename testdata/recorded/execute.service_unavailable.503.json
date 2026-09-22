@@ -22,7 +22,8 @@
         "path": "/v1/transfers",
         "headers": {
           "idempotency_key_present": true,
-          "credential_class": "api_key"
+          "credential_class": "api_key",
+          "content_type": "application/json"
         },
         "body": {
           "plan_token": "ferry_plan_PLACEHOLDER"
@@ -31,7 +32,8 @@
       "response": {
         "status": 503,
         "headers": {
-          "Retry-After": "5"
+          "Retry-After": "5",
+          "Content-Type": "application/json"
         },
         "body": {
           "error": {
