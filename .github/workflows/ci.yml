@@ -193,11 +193,16 @@ jobs:
           sudo apt-get install -y --no-install-recommends postgresql-client-18
           echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
 
+      # `ruby-version` is a version spec, not a path: `.ruby-version` is a
+      # special value meaning "read the file", and it is resolved against
+      # `working-directory`. Prefixing it with `api/` made setup-ruby parse
+      # `api/.ruby` as an engine name and fail (A425) — the API repository's
+      # own CI has always passed the bare value.
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-          ruby-version: api/.ruby-version
+          ruby-version: .ruby-version
           working-directory: api
 
       - name: Set up Go

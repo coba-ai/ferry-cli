@@ -624,3 +624,53 @@ func TestTheAPIIsCheckedOutWithTheDeployKeyAndNothingBroader(t *testing.T) {
 			"those make every other assertion in %s about the e2e job vacuous", ciWorkflow)
 	}
 }
+
+// The Ruby version is a version spec, not a path (A425).
+//
+// `ruby-version: api/.ruby-version` looks like a path and reads like one, and
+// it is neither: setup-ruby parses the value as `engine/version`, so it took
+// `api` for an engine and failed with "Unknown engine api/.ruby". The special
+// value is a bare `.ruby-version`, resolved against `working-directory`.
+//
+// This is pinned because nothing else here could catch it. The workflow is not
+// executable locally, `workflow_test.go` reads structure rather than semantics,
+// and the failure happened in the one job that had never run — so it survived
+// U6's whole verification gate and was found only by running CI for real. The
+// assertion is a slash, which is the visible part of the mistake.
+func TestTheRubyVersionIsAVersionAndNotAPath(t *testing.T) {
+	ci := loadWorkflow(t, ciWorkflow)
+
+	var found bool
+
+	for name, job := range ci.Jobs {
+		for _, step := range job.Steps {
+			if !strings.Contains(step.Uses, "ruby/setup-ruby") {
+				continue
+			}
+
+			found = true
+
+			version := step.With["ruby-version"]
+
+			if strings.Contains(version, "/") {
+				t.Errorf("job %s sets ruby-version to %q. setup-ruby reads that as "+
+					"`engine/version`, not as a file path, so a directory prefix becomes "+
+					"an engine name and the step fails before installing anything. The "+
+					"file is found relative to working-directory (%q) on its own.",
+					name, version, step.With["working-directory"])
+			}
+
+			if version == "" {
+				t.Errorf("job %s sets no ruby-version, so the Ruby installed is whatever the "+
+					"runner image defaults to rather than the one kurenn/ferry pins", name)
+			}
+		}
+	}
+
+	// The floor: no setup-ruby step at all means the loop asserted nothing,
+	// and the e2e job cannot boot a Rails app without Ruby.
+	if !found {
+		t.Fatalf("no job in %s uses ruby/setup-ruby, so this check is vacuous — and the "+
+			"end-to-end suite boots a Rails app", ciWorkflow)
+	}
+}
