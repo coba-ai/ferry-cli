@@ -1,0 +1,127 @@
+# goreleaser, for PLAN §5.15 and AC64/AC65.
+#
+# `e2e/release_config_test.go` pins the parts of this file the acceptance
+# criteria name — the four targets, CGO_ENABLED=0, the three -X stamps and the
+# tap — by set equality in both directions, so a target added or removed here
+# fails a test rather than shipping quietly.
+version: 2
+
+project_name: ferry
+
+before:
+  hooks:
+    # No `go mod tidy`. PLAN §4.3.4 and A313 freeze go.mod and go.sum after U1,
+    # and tidy reclassifies pflag; goreleaser's own scaffold suggests it here
+    # and it must not be taken. `go mod download` is the same preparation
+    # without the rewrite.
+    - go mod download
+
+builds:
+  - id: ferry
+    main: ./cmd/ferry
+    binary: ferry
+
+    env:
+      # A release binary must not link libc. It is installed on machines this
+      # build never saw, and a cgo build is bound to the glibc of the runner
+      # that made it.
+      - CGO_ENABLED=0
+
+    flags:
+      # Build paths are the developer's home directory; they are in the binary
+      # and they are nobody's business.
+      - -trimpath
+
+    ldflags:
+      # -s -w drops the symbol table and DWARF. The three -X stamps are what
+      # `ferry version` prints and what travels in the User-Agent (§5.15).
+      #
+      # CONTRACT_SHA256 comes from the environment and is referenced with no
+      # default on purpose: goreleaser fails a build whose template names an
+      # unset variable, and that failure is the whole point. The alternative —
+      # a default of "unknown" — ships a release binary claiming it was built
+      # against no contract, which is worse than not shipping. `e2e/run.sh` and
+      # `.github/workflows/cli-release.yml` both compute it with sha256sum over
+      # contract/openapi.yaml.
+      - -s -w
+      - -X github.com/kurenn/ferry-cli/internal/version.Version={{ .Version }}
+      - -X github.com/kurenn/ferry-cli/internal/version.Commit={{ .FullCommit }}
+      - -X github.com/kurenn/ferry-cli/internal/version.ContractSHA256={{ .Env.CONTRACT_SHA256 }}
+
+    goos:
+      - darwin
+      - linux
+
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: ferry
+    formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - README.md
+
+# Singular. `checksums:` is what the documentation's prose calls it and what a
+# reader writes from memory; goreleaser rejects the whole file for it, with
+# `field checksums not found in type config.Project` and no suggestion.
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  # `goreleaser build --snapshot` has no tag to read. The suffix keeps a
+  # snapshot binary from ever being mistaken for a release when somebody reads
+  # `ferry version` off a machine.
+  version_template: "{{ incpatch .Version }}-snapshot-{{ .ShortCommit }}"
+
+release:
+  # The tag names the CLI, so the release should too.
+  name_template: "ferry {{ .Version }}"
+  prerelease: auto
+
+# AC65 and PLAN §5.15 both say `brews` and `Formula/ferry.rb`. Neither exists in
+# goreleaser 2 any more: `brews` has been deprecated since v2.10 and `goreleaser
+# check` has failed on it since v2.16, because Homebrew wants pre-compiled
+# binaries installed as Casks rather than as formulas that shell out to a
+# tarball. The plan was written before that landed. Amendment A416 records the
+# change; this is `homebrew_casks`, which is what the tool accepts, and the file
+# it writes is `Casks/ferry.rb`.
+#
+# One consequence worth stating rather than discovering: Homebrew on Linux
+# cannot install a cask. `brew install kurenn/tap/ferry` is macOS-only now, and
+# the Linux tarball from the GitHub Release is the install route there. A `brews`
+# block would still have served Linuxbrew — that is what was given up, and it was
+# given up because the alternative is a release that `goreleaser check` fails.
+homebrew_casks:
+  - name: ferry
+    ids:
+      - ferry
+
+    repository:
+      owner: kurenn
+      name: homebrew-tap
+      branch: main
+      # A cross-repository push needs a token this repository does not have.
+      # `kurenn/homebrew-tap` is the only thing standing between a `cli/v*` tag
+      # and a published cask — see README.md "Releasing" and amendment A414.
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+
+    homepage: https://github.com/kurenn/ferry-cli
+    description: Move money through FERRY from a terminal or a script
+
+    binaries:
+      - ferry
+
+    # The binary is not signed or notarised — PLAN §10.1 row 7 has signing as
+    # outstanding — so macOS quarantines it on download and every `ferry`
+    # invocation is refused by Gatekeeper with a dialog. Stripping the attribute
+    # at install is goreleaser's documented workaround and the only thing that
+    # makes an unsigned cask usable. It comes out when signing lands.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/ferry"]
+          end

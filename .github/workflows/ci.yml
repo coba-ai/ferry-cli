@@ -39,8 +39,175 @@ jobs:
       - name: Test
         run: go test -count=1 -race ./...
 
+      # The fault points are compiled out without this tag
+      # (internal/fault/inject_off.go), so the crash-recovery paths — the ones
+      # that decide whether a killed process resends under the key it already
+      # used — are not exercised by the step above. PLAN §5.14 scoped this to
+      # the two packages that arm faults; it runs over everything instead,
+      # because `internal/fault` and `internal/cli` have tagged tests of their
+      # own (inject_test.go, json_fault_test.go) and a list of packages here is
+      # one more thing to forget to extend.
+      - name: Test with fault injection
+        run: go test -count=1 -race -tags faultinject ./...
+
+      - name: Install goreleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          install-only: true
+
+      # AC64. `goreleaser check`, the snapshot build and the assertions about
+      # what it produced are all in e2e/release_test.go behind the `goreleaser`
+      # tag, rather than being shell steps here: a shell step can only assert
+      # that goreleaser exited 0, and "it built four binaries, for the four
+      # targets, with the contract digest stamped in" is four assertions that
+      # need to read the output.
+      #
+      # No `-race`: these shell out to goreleaser and assert on files, and the
+      # race detector has nothing to detect in them.
+      - name: Test the release build
+        run: go test -count=1 -tags goreleaser ./e2e/...
+
       # go.mod and go.sum are frozen after U1 (PLAN §4.3.4, A313). A unit that
       # runs `go mod tidy` reclassifies pflag and edits them, so the tree must
       # be unchanged by a build.
       - name: Check the module files are unchanged
         run: git diff --exit-code go.mod go.sum
+
+  # Whether the end-to-end suite can run at all, decided in ten seconds and
+  # before a Postgres is started for nothing.
+  #
+  # A400 moved the CLI into this repository and left the Rails app it drives in
+  # kurenn/ferry, which is private. A job here cannot check that out with
+  # `GITHUB_TOKEN`: the token is scoped to this repository. So AC61–AC63 need a
+  # cross-repository token, and until one exists there is no e2e coverage in CI.
+  #
+  # This job **fails** when the secret is absent. It is a deliberate choice over
+  # the two alternatives, both of which were considered:
+  #
+  #   * `if: secrets.X != ''` — the job is skipped, GitHub renders it grey, and
+  #     the PR's check list reads as complete. That is the "looks like coverage
+  #     and is not" failure, and it is worse than no job at all, because the job
+  #     name is the thing a reviewer scans for.
+  #   * a `::warning` annotation and exit 0 — visible for one page load, then
+  #     green forever, and nothing records that AC61–AC63 are unenforced.
+  #
+  # A red check is the only form of this that cannot be read as coverage. The
+  # cost is that CI is red until an operator adds the secret, and that cost is
+  # the point: it is one action by one person (README.md, "Running the
+  # end-to-end suite"), and the alternative is silence. Recorded as A411.
+  cli-e2e-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      token: ${{ steps.gate.outputs.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Is a cross-repository token configured?
+        id: gate
+        env:
+          FERRY_API_REPO_TOKEN: ${{ secrets.FERRY_API_REPO_TOKEN }}
+        run: e2e/ci-preflight.sh
+
+  cli-e2e:
+    needs: cli-e2e-preflight
+    if: needs.cli-e2e-preflight.outputs.token == 'yes'
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        # 18 for the built-in uuidv7(), which every FERRY primary key defaults
+        # to. Matched to the API repository's own `test` job.
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:8-alpine
+        ports:
+          - "6379:6379"
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      FERRY_OMS_BACKEND: fixture
+      FERRY_DATABASE_HOST: localhost
+      FERRY_DATABASE_PORT: "5432"
+      FERRY_DATABASE_USER: postgres
+      FERRY_DATABASE_PASSWORD: postgres
+      FERRY_RATE_LIMIT_REDIS_URL: redis://localhost:6379/0
+      # PLAN §4.1 gives U6 its own database; the suite's fixture cleanup is
+      # fleet-wide and concurrent units would truncate each other's rows.
+      FERRY_TEST_DATABASE: ferry_test_cli_u6
+      FERRY_E2E_RAILS_DIR: ${{ github.workspace }}/api
+
+    steps:
+      - name: Checkout the CLI
+        uses: actions/checkout@v7
+
+      - name: Checkout the API
+        uses: actions/checkout@v7
+        with:
+          repository: kurenn/ferry
+          token: ${{ secrets.FERRY_API_REPO_TOKEN }}
+          path: api
+
+      # db/structure.sql is dumped by pg_dump 18 and the runner image ships an
+      # older client, which refuses to read it. Same step as the API's own CI.
+      - name: Install the PostgreSQL 18 client
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client-18
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: api/.ruby-version
+          working-directory: api
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      # Every step of the suite — database, bootstrap, binaries, server, the
+      # `go test -tags e2e` itself — is in this script rather than in steps
+      # here, so that the local path and the CI path cannot drift.
+      # e2e/workflow_test.go asserts that this job runs it.
+      - name: Run the end-to-end suite
+        run: e2e/run.sh
+
+  # The recordings check AC60 gives this repository is not here, and this is the
+  # note that says where it went rather than leaving a reader to wonder.
+  #
+  # AC60 asks the API repository's `test` job for `git diff --exit-code
+  # cli/testdata/recorded`. A400 moved the CLI out, and that step now lives in
+  # kurenn/ferry as `git diff --exit-code contract/recorded` — verified present.
+  # It checks that the *generator* is deterministic. It cannot check that this
+  # repository's vendored copy is current, which needs CI in that repository to
+  # read this one. Recorded as A410 and A412, both Open.
