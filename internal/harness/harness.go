@@ -211,7 +211,7 @@ func runOnPTY(t *testing.T, cmd *cobra.Command, args []string, stdin string) (st
 	// timing-dependent — the command's last line, including a prompt, would
 	// go missing in some runs and not others.
 	_ = slave.Close()
-	merged := <-transcript
+	merged := drainBounded(t, transcript, master)
 	_ = master.Close()
 
 	if panicked != nil {
@@ -219,6 +219,53 @@ func runOnPTY(t *testing.T, cmd *cobra.Command, args []string, stdin string) (st
 		panic(panicked)
 	}
 	return merged, exit
+}
+
+// drainBounded waits for the transcript, and gives up rather than hanging.
+//
+// Closing the slave normally ends the drain: with no slave open the pending
+// read on the master returns EIO. "No slave open" is the part that can fail.
+// The fd was installed as the process stdin, so a goroutine the command
+// abandoned mid-read still holds a reference, the close above drops nothing,
+// and the receive below never returns (A358). U5 hit exactly this: a consent
+// prompt interrupted by a signal returns from Ask while its reader goroutine
+// is still blocked on stdin.
+//
+// runBounded already bounds the command for the same class of reason. This is
+// the other half — a command that returned cleanly can still leave a reader
+// behind, and until now that hung the test rather than failing it. A hang
+// costs the whole CI job's budget and reports nothing; a failure names the
+// cause.
+func drainBounded(t *testing.T, transcript <-chan string, master *os.File) string {
+	t.Helper()
+
+	select {
+	case merged := <-transcript:
+		return merged
+	case <-time.After(Timeout):
+	}
+
+	// Closing the master is the only remaining way to end the drain. It
+	// discards whatever the kernel had buffered but drain had not yet read,
+	// which is why it is not the normal path — but this is already a
+	// failure, and a truncated transcript makes a better diagnostic than
+	// none.
+	_ = master.Close()
+
+	select {
+	case merged := <-transcript:
+		t.Errorf("harness: the transcript did not end within %s after the pty slave was closed, "+
+			"so something still held the slave open — an abandoned goroutine blocked on a read "+
+			"of the swapped stdin is the shape that does it (A358). Closing the master released "+
+			"it. The transcript below may be truncated:\n%s", Timeout, merged)
+
+		return merged
+	case <-time.After(2 * time.Second):
+		t.Fatalf("harness: the transcript did not end within %s and closing the pty master did "+
+			"not release it either", Timeout)
+
+		return ""
+	}
 }
 
 // runBounded runs fn, and if it has not returned within Timeout calls unblock
