@@ -45,6 +45,11 @@ type ownership struct {
 	} `yaml:"ignored"`
 }
 
+// worktreeDir is where this project puts its git worktrees. Every unit of the
+// slice works in one, so the main checkout has this directory populated most
+// of the time.
+const worktreeDir = ".worktrees"
+
 func loadOwnership(t *testing.T) ownership {
 	t.Helper()
 	b, err := os.ReadFile(ownershipFile)
@@ -89,6 +94,22 @@ func walkFiles(t *testing.T) []string {
 				return fs.SkipDir
 			}
 			return nil
+		}
+		// Nested worktrees, which are git plumbing of the same kind and fail
+		// the same way. A404 fixed the lint for someone working *inside* a
+		// worktree; this fixes it for the main checkout while one exists,
+		// where the walk descended into `.worktrees/<branch>/` and reported
+		// every file of a second checkout — all 74 recordings among them — as
+		// a file no unit owns. Since every unit of this slice works in a
+		// worktree under here, `go test ./...` in the main checkout was red
+		// for the whole slice, on paths that are not this repository's
+		// content at all.
+		//
+		// Skipped in code rather than named in OWNERSHIP's ignored list,
+		// following `.git`: that list is for paths that are *in* the
+		// repository and belong to no unit, and a nested checkout is neither.
+		if d.IsDir() && d.Name() == worktreeDir {
+			return fs.SkipDir
 		}
 		if d.IsDir() {
 			return nil
@@ -346,4 +367,48 @@ func TestOwnsMatchesSubtreesAndExactFilesOnly(t *testing.T) {
 			t.Errorf("owns(%q, %q) = %v, want %v", tc.prefix, tc.path, got, tc.want)
 		}
 	}
+}
+
+// The lint survives a nested worktree in the main checkout.
+//
+// It did not. `filepath.WalkDir(".")` descended into `.worktrees/<branch>/`
+// and reported every file of that second checkout as a file no unit owns —
+// so `go test ./...` in the main checkout was red whenever any worktree
+// existed, which for this slice was nearly always. It passed inside the
+// worktrees themselves, because a worktree has no `.worktrees/` of its own,
+// and that is why it went unnoticed for six units.
+//
+// The probe is a real directory rather than a mocked filesystem, because the
+// defect was in how the walk met the disk and a fake would have been written
+// to the same misunderstanding.
+func TestTheWalkIgnoresNestedWorktrees(t *testing.T) {
+	probe := filepath.Join(worktreeDir, "probe-"+t.Name())
+
+	if err := os.MkdirAll(probe, 0o755); err != nil {
+		t.Fatalf("making a nested checkout to walk past: %v", err)
+	}
+
+	t.Cleanup(func() { _ = os.RemoveAll(probe) })
+
+	// A name that is unmistakably a source file, so a walk that returns it
+	// cannot be excused as picking up something incidental.
+	planted := filepath.Join(probe, "main.go")
+	if err := os.WriteFile(planted, []byte("package main\n"), 0o644); err != nil {
+		t.Fatalf("planting a file in it: %v", err)
+	}
+
+	for _, f := range walkFiles(t) {
+		if strings.HasPrefix(f, filepath.ToSlash(worktreeDir)+"/") {
+			t.Errorf("the walk returned %q, which is inside a nested checkout. Those files "+
+				"belong to whichever branch is checked out there, not to this tree, and no "+
+				"entry in OWNERSHIP could sensibly claim them — so the only repairs "+
+				"available are to stop running the suite or to work without worktrees.", f)
+		}
+	}
+
+	// No floor here: `walkFiles` fatals on an empty walk already, with a
+	// message saying every check below it would be vacuous. Measured rather
+	// than assumed — M-A434-2b empties the walk without erroring and dies on
+	// that existing check, so a second one here would be a duplicate reading
+	// as independent evidence.
 }

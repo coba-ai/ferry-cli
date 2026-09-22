@@ -16,3 +16,7 @@
 
 # The faultinject build, which e2e/run.sh names and a local run may too.
 /ferry-fault
+
+# Git worktrees. Skipped by the ownership lint too — see worktreeDir in
+# ownership_test.go for why a nested checkout is not a path OWNERSHIP can own.
+/.worktrees/
