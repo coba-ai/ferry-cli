@@ -26,13 +26,16 @@
         "path": "/v1/api_keys/key_PLACEHOLDER_1",
         "headers": {
           "idempotency_key_present": false,
-          "credential_class": "personal_access_token"
+          "credential_class": "personal_access_token",
+          "content_type": null
         },
         "body": null
       },
       "response": {
         "status": 200,
-        "headers": {},
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8"
+        },
         "body": {
           "object": "api_key",
           "id": "key_PLACEHOLDER_1",

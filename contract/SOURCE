@@ -1,5 +1,6 @@
 repository  https://github.com/kurenn/ferry
-commit      f659eb5bae292d10f79b0796e456c273f6d3efee
+commit      be41ab3c38fdd3d94e4a93b91cdc7d9a8a153cde
 
 openapi.yaml  394f03b6260e708b638afa767258f53e46a64335efc80fd0125c5f9c04d97484
 errors.md     6e516bd92eb2e3140f548f22b7a729aafb418a1232776701acbb2504767e0f1f
+testdata/recorded  b2afc89a342b4776711a78b9066c897ac0322aefaa6d61cc16024eb37b5b19da

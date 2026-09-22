@@ -18,7 +18,8 @@
         "path": "/v1/api_keys",
         "headers": {
           "idempotency_key_present": false,
-          "credential_class": "personal_access_token"
+          "credential_class": "personal_access_token",
+          "content_type": "application/json"
         },
         "body": {
           "name": "cli-recorded-key",
@@ -31,7 +32,9 @@
       },
       "response": {
         "status": 403,
-        "headers": {},
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8"
+        },
         "body": {
           "error": {
             "code": "STEP_UP_REQUIRED",

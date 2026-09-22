@@ -2,6 +2,7 @@ package keys_test
 
 import (
 	"encoding/json"
+	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -283,7 +284,11 @@ func TestTheCreatedTokenIsPrintedExactlyOnceInTextMode(t *testing.T) {
 		t.Fatalf("exit %d, want 0\nstdout: %s\nstderr: %s", exit, stdout, stderr)
 	}
 
-	const token = "API_KEY_TOKEN_PLACEHOLDER_1"
+	// The recorder's canary (A335/A340). It is transcribed rather than read
+	// back out of the recording, because a test that draws the expected
+	// value from the same file the server answered from would pass however
+	// that file changed.
+	const token = "ferry_sk_sandbox_RecordedCanaryNotARealKeyDoNotUse0000000001"
 
 	if got := strings.Count(stdout, token); got != 1 {
 		t.Errorf("the token appears %d times on stdout, want exactly 1:\n%s", got, stdout)
@@ -310,20 +315,72 @@ func TestTheCreatedTokenIsPrintedExactlyOnceInTextMode(t *testing.T) {
 // AC37's `--login`.
 // ---------------------------------------------------------------------------
 
-// `--login` cannot be driven to a stored credential through the fixture.
+// `--login` drives a minted key from the wire into the credential file.
 //
-// The recorder substitutes `API_KEY_TOKEN_PLACEHOLDER_1` for the token it
-// captured (`spec/support/cli/recorder.rb`), and that string matches neither
-// token regex of §1.2.2, so `creds.Put` refuses it by shape. That is the
-// recorder behaving correctly — a real bearer token in a committed fixture
-// would be worse — but it means no test in this package can watch a key go
-// from the wire into the file. The store itself is asserted in
-// `store_internal_test.go`, where a well-shaped token can be used; what is
-// asserted here is the behaviour on the path the fixture can reach.
+// This is the test A340 existed to unblock. The recorder used to substitute
+// `API_KEY_TOKEN_PLACEHOLDER_1` for the token, which matched neither token
+// regex of §1.2.2, so `creds.Put` refused it by shape and the path stopped
+// one step short of the thing it exists to do. The recorder now emits a
+// well-shaped canary, so the whole path is reachable.
+func TestLoginStoresTheMintedKey(t *testing.T) {
+	server, home := loggedIn(t, "keys.create.sandbox.201")
+
+	before := storedProfile(t, home)
+
+	stdout, stderr, exit := run(t, invocation{
+		home: home,
+		args: []string{
+			"create", "--api", server.URL(), "--env", "sandbox",
+			"--name", "cli-recorded-key", "--scopes", "read,money:simulate", "--login",
+		},
+	})
+
+	if exit != 0 {
+		t.Fatalf("exit %d, want 0\nstdout: %s\nstderr: %s", exit, stdout, stderr)
+	}
+
+	after := storedProfile(t, home)
+
+	if after.APIKey == nil {
+		t.Fatal("--login exited 0 and stored no API key, so the key it minted is only on the " +
+			"screen — which is the failure A340 was about, moved rather than fixed")
+	}
+
+	const canary = "ferry_sk_sandbox_RecordedCanaryNotARealKeyDoNotUse0000000001"
+
+	if got := after.APIKey.Token; got != canary {
+		t.Errorf("the stored token is %q, want the minted one", got)
+	}
+
+	// The PAT that authenticated the mint is a different credential class
+	// and must survive: losing it would leave an operator able to use the
+	// key they just made and unable to make another.
+	if after.PAT == nil {
+		t.Error("--login discarded the personal access token that authenticated the mint")
+	} else if before.PAT != nil && after.PAT.Token != before.PAT.Token {
+		t.Error("--login replaced the personal access token rather than adding beside it")
+	}
+}
+
+// And when the store fails, the operator is told the key exists anyway.
 //
-// Suggested amendment A340 records the gap.
+// Until A340 this happened by itself, because the recorded token was
+// malformed — the test's fixture was a defect elsewhere, so fixing that
+// defect took the fixture with it. The failure is deliberate now: the
+// credential directory is made unwritable, so the atomic write cannot land.
+// A key has been minted on the server by then and there is no second chance
+// to read its token, which is why this cannot be a bare non-zero exit.
 func TestAMintedKeyThatCannotBeStoredSaysTheKeyExistsAnyway(t *testing.T) {
 	server, home := loggedIn(t, "keys.create.sandbox.201")
+
+	if err := os.Chmod(home, 0o500); err != nil {
+		t.Fatalf("making the credential directory unwritable: %v", err)
+	}
+
+	// Restored so the temporary directory can be cleaned up, and because a
+	// test that leaves the filesystem altered fails its neighbours rather
+	// than itself.
+	t.Cleanup(func() { _ = os.Chmod(home, 0o700) })
 
 	stdout, stderr, exit := run(t, invocation{
 		home: home,

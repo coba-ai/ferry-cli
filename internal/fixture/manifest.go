@@ -226,6 +226,19 @@ type RequestHeaders struct {
 	// CredentialClass is "api_key", "personal_access_token", or nil for the
 	// one scenario that sends no credential at all.
 	CredentialClass *string `json:"credential_class"`
+
+	// ContentType is the media type the request carried, read by the
+	// recorder out of the env the Rack app was handed rather than echoed
+	// from the argument that built it (A335). Nil for the GETs, which send
+	// no body and so no media type.
+	//
+	// It is here because without it the media type could not be a match
+	// axis, and `auth.unsupported_media_type.415` rested entirely on its
+	// verbatim body — so a unit sending JSON under a non-JSON content type
+	// matched the 201 scenario and was answered 201 where FERRY answers
+	// 415. The fixture was more permissive than the API on precisely the
+	// axis that scenario exists to cover.
+	ContentType *string `json:"content_type"`
 }
 
 // RecordedResponse is the answer.

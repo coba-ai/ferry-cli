@@ -23,7 +23,8 @@
         "path": "/v1/transfers/simulate",
         "headers": {
           "idempotency_key_present": true,
-          "credential_class": "api_key"
+          "credential_class": "api_key",
+          "content_type": "application/json"
         },
         "body": {
           "customer_id": "cst_PLACEHOLDER_1",
@@ -52,7 +53,8 @@
       "response": {
         "status": 429,
         "headers": {
-          "Retry-After": "60"
+          "Retry-After": "60",
+          "Content-Type": "application/json"
         },
         "body": {
           "error": {

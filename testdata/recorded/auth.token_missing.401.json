@@ -22,14 +22,16 @@
         "path": "/v1/me",
         "headers": {
           "idempotency_key_present": false,
-          "credential_class": null
+          "credential_class": null,
+          "content_type": null
         },
         "body": null
       },
       "response": {
         "status": 401,
         "headers": {
-          "WWW-Authenticate": "Bearer realm=\"ferry\""
+          "WWW-Authenticate": "Bearer realm=\"ferry\"",
+          "Content-Type": "application/json; charset=utf-8"
         },
         "body": {
           "error": {
