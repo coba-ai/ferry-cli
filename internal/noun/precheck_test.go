@@ -1,6 +1,7 @@
 package noun
 
 import (
+	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -276,6 +277,66 @@ func TestTheRemediationNamesHowToGetTheMissingCredential(t *testing.T) {
 			}
 		}
 	}
+}
+
+// The refusal for an empty profile has to read as a sentence (A419).
+//
+// It did not, for commands accepting either credential class: the branch
+// wrapped `remediationFor`'s complete sentence in "Run `ferry auth login
+// --api <url>` with a … first." and produced "…with a Store either
+// credential with `ferry auth login --api <url> --token-stdin`. first."
+//
+// This is the branch a new operator reaches first — no profile at all — and
+// the only one of the three whose text nothing read. So the assertion is not
+// "it mentions the login command", which the mangled sentence also satisfied.
+// It is that no remediation is embedded mid-clause, over every requirement.
+func TestTheEmptyProfileRefusalReadsAsASentence(t *testing.T) {
+	// The refusal reads nothing but the profile name, so this needs no
+	// store, no file and no filesystem: an empty Globals answers
+	// `Profile()` with the default, which is the name an operator with no
+	// profile at all would see.
+	local := &Local{Globals: &Globals{}}
+
+	for _, req := range []creds.Requirement{creds.RequirePAT, creds.RequireAPIKey, creds.RequireEither} {
+		err := local.refuseCredential(req, fmt.Errorf("%w: default", creds.ErrNoProfile))
+		if err == nil {
+			t.Fatalf("%v: an absent profile was not refused", req)
+		}
+
+		got := err.Error()
+
+		// The remediation must be its own sentence: preceded by the end of
+		// one and not followed by the tail of another.
+		remediation := remediationFor(req)
+
+		at := strings.Index(got, remediation)
+		if at < 0 {
+			t.Errorf("%v: the refusal does not carry the remediation at all:\n%s", req, got)
+
+			continue
+		}
+
+		if before := got[:at]; !strings.HasSuffix(before, "\n") {
+			t.Errorf("%v: the remediation is spliced into a clause rather than starting a "+
+				"line — %q precedes it:\n%s", req, lastRunes(before, 40), got)
+		}
+
+		if after := strings.TrimSpace(got[at+len(remediation):]); after != "" {
+			t.Errorf("%v: %q trails the remediation, so the sentence continues after it had "+
+				"ended:\n%s", req, after, got)
+		}
+	}
+}
+
+// lastRunes is the tail of s, for a message that should quote the words next
+// to the fault rather than the whole refusal.
+func lastRunes(s string, n int) string {
+	r := []rune(s)
+	if len(r) <= n {
+		return s
+	}
+
+	return string(r[len(r)-n:])
 }
 
 // A credential bound to one endpoint is not handed to another (C7, AC9).

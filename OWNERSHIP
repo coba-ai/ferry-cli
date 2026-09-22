@@ -27,6 +27,13 @@ units:
       - OWNERSHIP
       - ownership_test.go
       - contract_test.go
+      # A418: OWNERSHIP's ignored list below claimed dist/ and the built
+      # binary were gitignored in a repository with no .gitignore, so both
+      # live here beside the list that makes the claim — the test joins the
+      # two, and a claim and its check drifting apart is what it exists to
+      # stop.
+      - .gitignore
+      - gitignore_test.go
       # A400 split the CLI into its own repository. contract/ is the vendored
       # copy of the API's openapi.yaml and errors.md that the pins in
       # internal/api and internal/outcome read, and docs/PLAN.md is this
@@ -97,10 +104,17 @@ units:
     description: Contract schemas (Ruby) — owns no path under cli/
     paths: []
 
-# Paths under cli/ that are not source and belong to no unit. Each needs a
-# reason: an ignore list without one is how a file quietly stops being owned.
+# Paths that are not source and belong to no unit. Each needs a reason: an
+# ignore list without one is how a file quietly stops being owned. These are
+# paths, not gitignore patterns — .gitignore holds the patterns, and
+# gitignore_test.go checks that git actually ignores every path named here.
 ignored:
   - path: dist/
-    reason: goreleaser's build output (cli/.goreleaser.yaml, U6); gitignored, never committed.
+    reason: goreleaser's build output (.goreleaser.yaml, U6); gitignored, never committed.
   - path: ferry
-    reason: the binary a local `go build` drops in the module root; gitignored.
+    reason: >
+      the binary a local `go build` drops in the module root. .gitignore
+      anchors its pattern to `/ferry`, because an unanchored one also matches
+      cmd/ferry/ and would ignore the source that builds it.
+  - path: ferry-fault
+    reason: the faultinject build, which e2e/run.sh names and a local run may too.
