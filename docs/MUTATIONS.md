@@ -2,8 +2,11 @@
 
 AC68. §6.2 of `PLAN.md` allocates 117 named mutations across 92 acceptance
 criteria. This is the record of what was actually observed, reconciled from
-the eight unit pull requests plus the follow-up fixes, and — where the record
-was silent and the criterion was a money one — re-measured by U7.
+the eight unit pull requests plus the follow-up fixes, re-measured by U7 where
+the record was silent and the criterion was a money one, and closed out by a
+later pass that ran every remaining silent row. 116 of the 117 now carry a
+verdict; the one that does not is M97, which cannot be measured from this
+repository at all (A373).
 
 §6.3 declares this document a **non-control**: its "mutation" would be
 deleting it, and the value is the observations rather than a test that reads
@@ -14,7 +17,16 @@ documents.
 
 ## The headline
 
-**A money-path control was missing and is now written.** §6.2 M77 ("skip the
+Two findings, and they point opposite ways. **One silent row was hiding a
+real money-path gap** (M77, below), which is why the rest had to be run.
+**The rest were not**: all sixteen remaining measurable silent rows were run
+in the closure pass and fifteen died, including all seven of the money-path
+ones. The sixteenth survived and is an equivalent mutant. No code needed to
+change. Neither half could have been asserted without measuring it.
+
+### M77 — a money-path control was missing and is now written
+
+§6.2 M77 ("skip the
 credential comparison on `resume`", AC70, §7.1 A19) was never reported by any
 unit. Applied against `main` it **survived**, twice:
 
@@ -51,13 +63,18 @@ a mutation nobody ran, and one of them was hiding a real gap.
 | Reported by the owning unit, as the plan wrote it | 81 |
 | Reported under the planned number, different edit applied | 10 |
 | Reported by a follow-up PR under local numbering, with a plan cross-reference | 3 |
-| Re-measured by U7 in this audit | 5 |
-| Named in prose, never as a table row | 1 |
-| **No verdict on record anywhere** | **17** |
+| Re-measured by U7 in the first pass of this audit | 5 |
+| **Measured by the audit closure** (the 16 measurable silent rows, plus M70) | **17** |
+| **No verdict on record anywhere** | **1** |
 
-The last row is the finding. An unreported mutation is not a mutation that
-passed; it is a mutation nobody ran, and M77 is the proof that the distinction
-has teeth.
+The one remaining is M97, and it is not a miss: U7 established it cannot be
+killed from this repository (A373). Every other silent row now has a verdict
+and a named killer, below.
+
+An unreported mutation is not a mutation that passed; it is a mutation nobody
+ran, and M77 is the proof that the distinction has teeth. The closure below is
+the other half of that proof, and it points the other way: sixteen rows were
+run and fifteen died. Both halves had to be measured to know which was true.
 
 ### Reported under the planned number with a different edit (10)
 
@@ -113,58 +130,177 @@ M3's failure is worth keeping rather than quietly replacing: the plan's text
 is a mutation that does not compile, so any unit that had tried it would have
 hit the same wall.
 
-### Named in prose only (1)
+### Named in prose only — M70, since tabulated
 
-**M70** (make `--no-precheck` the default, AC63). U6 narrates it in the PR
+**M70** (make `--no-precheck` the default, AC63). U6 narrated it in the PR
 body — it survived when only `OpSimulateTransfer` was flipped, because the
 money path independently acquires an api-key-only `get_command` session, and
-died when all three rows were flipped. There is no table row, so a reader
-counting rows finds nothing. The verdict exists; the record of it does not.
+died when all three rows were flipped. There was no table row, so a reader
+counting rows found nothing: the verdict existed and the record of it did not.
+Both forms have now been re-measured and both reproduce; the rows are under
+"M70, which had a verdict and no row" below.
 
-### No verdict on record anywhere (17)
+### Why the seventeen were silent
 
-| # | Mutation | AC | Whose |
-| --- | --- | --- | --- |
-| M42 | Usage error to stderr only in JSON mode | AC41 | U5 |
-| M45 | Store the token on a simulate-only run | AC46 | U5 |
-| M46 | Re-simulate on `PLAN_EXPIRED` | AC47 | U5 |
-| M47 | Mint the execute key after the simulate 201 | AC47 | U5 |
-| M49 | Print `✓ success` | AC49 | U5 |
-| M59 | Remove `timeout-minutes` from `cli` | AC60 | U6 |
-| M60 | e2e scopes `read,money:simulate` | AC61 | U6 |
-| M61 | Drop `-X main.version` | AC64 | U6 |
-| M69 | `after_record_written` asserts `Idempotency-Replayed` present | AC62 | U6 |
-| M71 | Trigger `cli-release.yml` on `v*` | AC65 | U6 |
-| M86 | Flag body through `map[string]any` with a random key | AC78 | U5 |
-| M87 | `after_simulate_recorded_before_execute_begin`: resume re-simulates | AC80 | U5 |
-| M88 | `after_simulate_send_before_record`: resume executes with a `null` token | AC80 | U5 |
-| M97 | Delete a still-present defect from `DOC-DEFECTS.md` | AC89 | U7 — see below |
-| M111 | `transfers execute` writes `awaiting_confirmation` only on `y` | AC93 | U5 |
-| M116 | AC63 e2e: emit `http: {}` on a local refusal | AC63 | U6 |
-| M117 | AC62 e2e: skip the `commands` row count | AC62 | U6 |
-
-Eight of the seventeen are U6's, and the reason is structural rather than
+Eight of the seventeen were U6's, and the reason is structural rather than
 careless: **U6's PR body reports a count and not a table.** "25 applied. 21
 KILLED, 2 SURVIVED, 2 superseded by a corrected application" — with the five
 false KILLEDs it caught described at length, which is the most valuable
-paragraph in any of the eight PRs. But no row is attributable to a §6.2
-number, so eight rows covering CI, the e2e suite and the release cannot be
-reconciled. Recorded as A371.
+paragraph in any of the eight PRs. But no row was attributable to a §6.2
+number, so eight rows covering CI, the e2e suite and the release could not be
+reconciled. Recorded as A371, and **A371's finding stands whatever the numbers
+turned out to be**: all seven of U6's measurable rows reproduce below, and the
+verdicts were still unrecoverable from the repository. A report that cannot be
+reconciled is a process defect independently of whether it was right.
 
-Seven of the remaining nine are U5's, and five of those seven are money-path
-(M45, M46, M47, M86, M87, M88, M111). U5 applied 30 mutations and reported
-every one; these are simply rows it did not reach. Given M77, they should not
-be assumed green. Recorded as A372. U7 did not run them: the protocol is one
-mutation at a time with a restore and a `cmp` between each, and seventeen of
-those is a unit of work rather than the tail of an audit. Saying so is the
-honest answer; running five of them and implying the rest would not be.
+Seven of the remaining nine were U5's, five of those money-path. U5 applied 30
+mutations and reported every one; these were simply rows it did not reach.
+Recorded as A372. U7 did not run them and said so rather than running five and
+implying the rest.
 
-**M97 is U7's own and is only half-measurable.** It says "delete a
-still-present defect from `DOC-DEFECTS.md`" and expects `cli_docs_spec.rb` to
-go red. `DOC-DEFECTS.md` is in this repository and the spec is in the other
-one, and the spec deliberately does not read across that boundary. The half
-that is measurable — delete a claim from the spec's own §1.4 set — was applied
-and killed. The half that is not is A373.
+**M97 is U7's own and is only half-measurable**, and is the one row still
+without a verdict. It says "delete a still-present defect from
+`DOC-DEFECTS.md`" and expects `cli_docs_spec.rb` to go red. `DOC-DEFECTS.md`
+is in this repository and the spec is in the other one, and the spec
+deliberately does not read across that boundary — reaching across the
+filesystem is the defect A400 existed to remove. The half that is measurable —
+delete a claim from the spec's own §1.4 set — was applied and killed. The half
+that is not is A373, which stays open.
+
+## The audit closure: the seventeen, measured
+
+Sixteen of the seventeen, plus M70. One mutation at a time; snapshot, apply,
+assert the edit landed on the intended line **with an occurrence count**,
+run, record, restore from the snapshot and `cmp` byte-identical before the
+next. Every money-path row was run over the whole module in both build
+configurations (`go test -count=1 ./...` and `-tags faultinject ./...`)
+rather than over its own package, because a row killed only from a distant
+package is worth knowing about — and two of them are exactly that.
+
+**The headline, and it is the opposite of M77's.** All seven of U5's
+money-path rows were already defended. None was a coverage gap, so there is
+no survived-then-died pair in this PR and no code changed. That is a result
+rather than an absence of one: M77 established that a silent row can hide a
+real gap, and the only way to know whether these seven did was to run them.
+A426.
+
+### Priority 1 — U5's nine (AC41, AC46, AC47, AC49, AC78, AC80, AC93)
+
+| # | Mutation applied | File | Verdict | Killed by |
+| --- | --- | --- | --- | --- |
+| M45 | `Record` skips `stripPlanToken` when the run has one step | `runs/ledger.go:420` | KILLED | `TestCreateWithoutBroadcastSimulatesOnly` |
+| M46 | A `refused_resimulate` execute is followed by a second simulate | `transfers/create.go:199` | KILLED | `TestBroadcastDoesNotResimulateOnARefusal` |
+| M47 | The execute key is re-minted from a fresh ULID after the simulate 201 | `transfers/create.go:180` | KILLED | `TestBroadcastPreMintsBothKeysBeforeSending`; also `TestResumeAfterTheSimulateWasRecordedExecutesTheStoredPlan` |
+| M86 | The flag body is re-serialised through `map[string]any` with a random key | `transfers/body.go:170` | KILLED | `TestTheFlagsProduceTheRecordedBody` (AC78's own) and 18 others |
+| M87 | A resume of the inter-step window re-sends the simulate before executing | `transfers/resume.go:136` | KILLED | `TestResumeAfterTheSimulateWasRecordedExecutesTheStoredPlan` — **only under `-tags faultinject`** |
+| M88 | `broadcast` proceeds to the execute when the simulate handed over no token | `transfers/create.go:167` | KILLED | `TestResumeAfterAnUnrecordedSimulateCannotExecute` (AC80's own); also `TestBroadcastReplayedSimulateNeverExecutes` |
+| M111 | A one-step run writes `awaiting_confirmation` after `y`, not before the prompt | `transfers/money.go:781` | KILLED | `TestResumingAnUnsentStepWithNoTerminalIsOne` (the AC93 `at_prompt` control) and 3 others |
+| M42 | The JSON usage document goes to stderr instead of stdout | `cli/root.go:362` | KILLED | `TestJSONModeWritesExactlyOneDocument/a_usage_error` (AC41's own) and 2 others |
+| M49 | The execute render prints `✓ success` instead of "accepted upstream … not settled" | `transfers/report.go:151` | KILLED | `TestExecuteRenderDoesNotClaimSuccess` |
+
+**M87 is the row to read.** It survives `go test -count=1 -race ./...`
+**entirely** — zero failures across all 26 packages — and dies only under
+`-tags faultinject`. That is correct rather than wrong: AC80's window is
+reachable only through a fault point, and a fault point is a no-op without
+the tag (`internal/fault/inject_off.go`). But it means the control for "a
+resume never re-simulates" is invisible to anyone who runs the default suite,
+and a reader who dropped the tagged run from CI would take a money-path
+control with it and see nothing go red. CI does run both. A427.
+
+### Priority 2 — U6's seven, re-run rather than trusted
+
+U6's verdicts were treated as prior claims to verify, not as truth. **All
+seven reproduce**, including the one U6 predicted would survive. Each was run
+after establishing a green baseline in the same environment, and each e2e
+verdict below was confirmed to be an assertion firing — the failure text is
+quoted — rather than the harness dying on a missing variable, which is the
+shape that produced U6's six false KILLEDs.
+
+| # | Mutation applied | Verdict | U6 said | Killed by |
+| --- | --- | --- | --- | --- |
+| M59 | `timeout-minutes: 10` removed from the `cli` job | KILLED | KILLED | `TestEveryJobIsTimeBounded`, `TestTheDeclaredTimeoutsAreTheOnesThePlanFixes` |
+| M60 | e2e mints the key with `read,money:simulate` | KILLED | KILLED | `TestBroadcastExecutesAndRunsShowHasTheTokenScrubbed` and 3 others, on `403 INSUFFICIENT_SCOPE` |
+| M61 | The `-X …version.Version` stamp dropped from `.goreleaser.yaml` | KILLED | KILLED | `TestTheReleaseStampsExactlyTheThreeVersionVariables` — **without goreleaser** |
+| M69 | `after_record_written` asserts `Idempotency-Replayed` **present** | KILLED | KILLED | `TestResumeAfterACrashBeforeTheRequestLeftSendsItForTheFirstTime` |
+| M71 | The release trigger changed from `v*` to `cli/v*` (run reversed, per A417) | KILLED | KILLED | `TestTheReleaseWorkflowTriggersOnlyOnVersionTags` |
+| M116 | `http: {}` emitted on a local refusal | KILLED | KILLED | `TestAPATOnlyProfileIsRefusedBeforeAnyRequestLeaves` — **e2e only** |
+| M117 | The `commands` row count `!= 1` weakened to `< 1` | **SURVIVED** | SURVIVED | — (equivalent; see below) |
+
+Two of these have a narrower control than their §6.2 row suggests, and both
+are worth stating because the consequence is the same: a CI run that omits
+one step loses the row entirely.
+
+- **M61 no longer needs goreleaser.** U6 fetched the 2.18.2 static binary to
+  measure it. `e2e/release_config_test.go` reads `.goreleaser.yaml` directly
+  and is in the default `go test ./...`, so the row now dies on a bare
+  machine. The tagged `release_test.go` that actually builds is a second,
+  stronger control, not the only one. A429.
+- **M116 is killed by nothing but the end-to-end suite.** It survives all 26
+  packages in both build configurations. CI's `cli-e2e` job is gated on
+  `cli-e2e-preflight` and is skipped when `FERRY_API_REPO_SSH_KEY` is absent
+  (A424), so on any run without that secret — a fork, or after a rotation —
+  M116 and M60 have no control at all. That is the cost of A411's gate, now
+  measured rather than reasoned about. A428.
+
+**M117 survived, and the survival means nothing — it is an equivalent
+mutant**, which is also what §6.2 predicted and what §6.3 says the row is for
+("a demonstration, not a control"). Against a correct system
+`commandsWithKey` returns exactly 1, so `!= 1` and `< 1` are the same
+predicate and no input distinguishes them. That much is arithmetic. The part
+worth measuring is whether the assertion is load-bearing in the direction it
+stops covering — a count above 1 — and it is not: constructing that defect
+(M3b's shape, a resume resending under `key + "-resumed"`) makes the resume
+exit 4 and the test fatal at `resume_test.go:131`, the exit-code assertion,
+before the count is ever consulted. The row count is defended in depth by
+`assertKeyIs` and the exit code, which is why weakening it changes nothing.
+A431.
+
+### M70, which had a verdict and no row
+
+§6.2's M70 ("make `--no-precheck` the default", AC63) was narrated in U6's PR
+body and never tabulated, so a reader counting rows found nothing. Both forms
+re-measured, and both reproduce U6's account exactly.
+
+| # | Mutation | Verdict | Killed by |
+| --- | --- | --- | --- |
+| M70 | `OpSimulateTransfer` alone flipped to `RequireEither` | **SURVIVED the e2e suite**; KILLED by the unit census | `TestTheRequirementTableMatchesTheControllers` |
+| M70b | All three money rows flipped (`simulate`, `execute`, `get_command`) | KILLED | `TestAPATOnlyProfileIsRefusedBeforeAnyRequestLeaves` — `http.status` 403 where null is required, and a run minted |
+
+The reason M70 survives alone is the one U6 gave: the money path acquires a
+`get_command` session alongside the money operation (`money.go:112`), and
+`get_command` is independently `RequireAPIKey`, so a PAT-only profile is still
+refused locally even with the simulate row opened. The behavioural control is
+therefore only sensitive to all three rows together; the per-row control is
+the table census, which is a different kind of test. Recording both is what
+makes that legible. A432.
+
+### What the §6.2 rows cite, and where the tests actually are
+
+Seven of the rows measured here name an example file that does not exist or
+does not hold the control. This is a documentation defect rather than a
+coverage one — every row was killed — but it is the reason a reader
+reconciling §6.2 against the tree concludes a row is uncovered when it is not,
+which is the mistake this whole audit exists to stop. A430.
+
+| # | §6.2 cites | The control is actually in |
+| --- | --- | --- |
+| M46, M47 | `broadcast_test.go` | `create_test.go` — no `broadcast_test.go` exists |
+| M49 | `render_test.go` | `create_test.go` — no `render_test.go` exists |
+| M111 | `execute_test.go` (pty) | `resume_test.go` — `execute_test.go` has no pty or `at_prompt` example |
+| M59, M71 | `workflow_spec.rb` (the API repository) | `e2e/workflow_test.go`, moved here by A400 |
+| M61 | `release_test.go` | `e2e/release_config_test.go` in the default suite; `e2e/release_test.go` behind `-tags goreleaser` is the second control |
+
+### What the closure did not establish
+
+- **M97.** Still unmeasurable from this repository, still A373, deliberately
+  left rather than replaced with something that would reach a different
+  branch and be recorded under its number.
+- **That the 81 as-planned rows are true.** Unchanged from U7's caveat. This
+  PR re-ran seventeen rows; it did not re-run the other hundred, and U6's own
+  six false KILLEDs remain the reason to say that out loud.
+- **Whether any surviving mutant exists outside §6.2.** The table is the
+  hypothesis set. A defect nobody wrote a row for is not found by running the
+  rows.
 
 ## U7's own mutations
 
@@ -251,12 +387,13 @@ what was found.
 
 ## What this audit did not establish
 
-- **The 17 rows above.** Not run. Listed, not assumed.
+- **The 17 rows.** Not run *by U7*. They were listed rather than assumed, and
+  the closure pass above has since run sixteen of them; M97 remains.
 - **Whether a cited test asserts anything.** `internal/adversarial_test.go`
   binds each §7.1 row to tests by a name the toolchain resolves, so a rename
   or a deletion breaks the census. It does not re-run the cited assertion, and
   it cannot tell a strong test from a weak one. §6.2 is the control for that,
-  which is why the 17 unreported rows matter more than they would otherwise.
+  which is why the 17 unreported rows mattered more than they would otherwise.
 - **That the reported verdicts are true.** This is a reconciliation of what
   eight PRs said, not a re-run. U6's own report of five false KILLEDs — from a
   runner that read the exit code while the test binary was dying on a missing
