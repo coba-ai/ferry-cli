@@ -390,8 +390,18 @@ func (l *Local) tokenOverride() (*creds.File, error) {
 func (l *Local) refuseCredential(req creds.Requirement, err error) error {
 	switch {
 	case errors.Is(err, creds.ErrNoProfile):
+		// `remediationFor` returns a complete sentence, which is what the
+		// branch below needs and what this one used to wrap in "Run
+		// `ferry auth login` with a … first." The result, for a command
+		// that accepts either class, was: "Run `ferry auth login --api
+		// <url>` with a Store either credential with `ferry auth login
+		// --api <url> --token-stdin`. first." (A419)
+		//
+		// The wrapper is gone rather than the remediation reworded into a
+		// noun phrase: every remediation already names the login command,
+		// so the prefix was saying it twice even where it parsed.
 		return render.Refused(
-			"no credentials are stored for profile %q.\nRun `ferry auth login --api <url>` with a %s first.",
+			"no credentials are stored for profile %q.\n%s",
 			l.Profile(), remediationFor(req))
 
 	case errors.Is(err, creds.ErrNoCredentialOfClass):

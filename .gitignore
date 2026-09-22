@@ -1,0 +1,18 @@
+# Build output. OWNERSHIP's `ignored:` list has said both of these were
+# gitignored since the split, in a repository that had no .gitignore at all
+# (A418) — so `git add -A` after a goreleaser run was one command away from
+# committing a dist/ full of release archives.
+#
+# Every pattern is anchored, and the binaries have to be. An unanchored
+# `ferry` matches any path component of that name, which includes cmd/ferry/,
+# so it would silently ignore new files in the package that builds the
+# binary. `gitignore_test.go` measures that.
+
+# goreleaser's output (.goreleaser.yaml, U6).
+/dist/
+
+# The binary a local `go build` drops in the module root.
+/ferry
+
+# The faultinject build, which e2e/run.sh names and a local run may too.
+/ferry-fault
