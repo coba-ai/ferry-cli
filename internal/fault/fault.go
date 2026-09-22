@@ -38,7 +38,7 @@ import (
 	"os"
 	"sync/atomic"
 
-	"github.com/kurenn/ferry-cli/internal/fsx"
+	"github.com/coba-ai/ferry-cli/internal/fsx"
 )
 
 // EnvVar names the fault point to fire.

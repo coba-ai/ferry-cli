@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/ulid"
+	"github.com/coba-ai/ferry-cli/internal/ulid"
 )
 
 const crockford = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"

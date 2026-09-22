@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/fsx"
-	"github.com/kurenn/ferry-cli/internal/ulid"
+	"github.com/coba-ai/ferry-cli/internal/fsx"
+	"github.com/coba-ai/ferry-cli/internal/ulid"
 )
 
 // ScrubGrace is how long past a plan's expiry a token is kept (PLAN §5.3).

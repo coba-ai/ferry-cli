@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/api"
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/api"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // AC23 and C3. The split is by whether bytes may have left the host, and the

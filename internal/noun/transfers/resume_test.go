@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/creds"
-	"github.com/kurenn/ferry-cli/internal/fault"
-	"github.com/kurenn/ferry-cli/internal/fsx"
-	"github.com/kurenn/ferry-cli/internal/runs"
+	"github.com/coba-ai/ferry-cli/internal/creds"
+	"github.com/coba-ai/ferry-cli/internal/fault"
+	"github.com/coba-ai/ferry-cli/internal/fsx"
+	"github.com/coba-ai/ferry-cli/internal/runs"
 )
 
 // `runs resume` on a step that may already have been sent. Every test here

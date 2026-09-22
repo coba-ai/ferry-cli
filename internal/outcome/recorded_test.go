@@ -51,7 +51,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 	"gopkg.in/yaml.v3"
 )
 

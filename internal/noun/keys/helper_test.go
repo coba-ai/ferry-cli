@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/creds"
-	"github.com/kurenn/ferry-cli/internal/fixture"
-	"github.com/kurenn/ferry-cli/internal/fsx"
-	"github.com/kurenn/ferry-cli/internal/harness"
-	"github.com/kurenn/ferry-cli/internal/noun"
-	"github.com/kurenn/ferry-cli/internal/noun/keys"
-	"github.com/kurenn/ferry-cli/internal/xdg"
+	"github.com/coba-ai/ferry-cli/internal/creds"
+	"github.com/coba-ai/ferry-cli/internal/fixture"
+	"github.com/coba-ai/ferry-cli/internal/fsx"
+	"github.com/coba-ai/ferry-cli/internal/harness"
+	"github.com/coba-ai/ferry-cli/internal/noun"
+	"github.com/coba-ai/ferry-cli/internal/noun/keys"
+	"github.com/coba-ai/ferry-cli/internal/xdg"
 )
 
 // No test here calls t.Parallel(): `harness.Run` swaps the process streams and

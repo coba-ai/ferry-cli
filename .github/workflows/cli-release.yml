@@ -61,7 +61,7 @@ jobs:
           # write` above is what creates the release in this repository.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          # This one does. It pushes Formula/ferry.rb to kurenn/homebrew-tap,
+          # This one does. It pushes Formula/ferry.rb to coba-ai/homebrew-tap,
           # which is a different repository, and GITHUB_TOKEN cannot write
           # there. The tap exists; the secret is what is missing, and without it
           # goreleaser fails the `brews` step after having already published the

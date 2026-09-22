@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/fault"
+	"github.com/coba-ai/ferry-cli/internal/fault"
 )
 
 // AC41's last two cases: a panic in a renderer, and SIGINT.

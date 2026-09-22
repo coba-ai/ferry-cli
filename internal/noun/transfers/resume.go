@@ -7,10 +7,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kurenn/ferry-cli/internal/cli/flight"
-	"github.com/kurenn/ferry-cli/internal/outcome"
-	"github.com/kurenn/ferry-cli/internal/render"
-	"github.com/kurenn/ferry-cli/internal/runs"
+	"github.com/coba-ai/ferry-cli/internal/cli/flight"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/render"
+	"github.com/coba-ai/ferry-cli/internal/runs"
 )
 
 // ResumeOptions is what `ferry runs resume` may say.

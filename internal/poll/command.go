@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"sort"
 
-	"github.com/kurenn/ferry-cli/internal/api"
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/api"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // Command is the `Command` schema of `openapi.yaml` — the body of

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/fault"
-	"github.com/kurenn/ferry-cli/internal/render"
-	"github.com/kurenn/ferry-cli/internal/runs"
+	"github.com/coba-ai/ferry-cli/internal/fault"
+	"github.com/coba-ai/ferry-cli/internal/render"
+	"github.com/coba-ai/ferry-cli/internal/runs"
 )
 
 // This file runs only under `-tags faultinject`. Without the tag the

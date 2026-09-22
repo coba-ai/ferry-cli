@@ -13,17 +13,17 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/kurenn/ferry-cli/internal/api"
-	"github.com/kurenn/ferry-cli/internal/cli/flight"
-	"github.com/kurenn/ferry-cli/internal/consent"
-	"github.com/kurenn/ferry-cli/internal/creds"
-	"github.com/kurenn/ferry-cli/internal/fault"
-	"github.com/kurenn/ferry-cli/internal/noun"
-	"github.com/kurenn/ferry-cli/internal/outcome"
-	"github.com/kurenn/ferry-cli/internal/poll"
-	"github.com/kurenn/ferry-cli/internal/render"
-	"github.com/kurenn/ferry-cli/internal/runs"
-	"github.com/kurenn/ferry-cli/internal/version"
+	"github.com/coba-ai/ferry-cli/internal/api"
+	"github.com/coba-ai/ferry-cli/internal/cli/flight"
+	"github.com/coba-ai/ferry-cli/internal/consent"
+	"github.com/coba-ai/ferry-cli/internal/creds"
+	"github.com/coba-ai/ferry-cli/internal/fault"
+	"github.com/coba-ai/ferry-cli/internal/noun"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/poll"
+	"github.com/coba-ai/ferry-cli/internal/render"
+	"github.com/coba-ai/ferry-cli/internal/runs"
+	"github.com/coba-ai/ferry-cli/internal/version"
 )
 
 // DefaultTimeout is `--timeout`'s default (§5.7).

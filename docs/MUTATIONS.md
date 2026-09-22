@@ -102,7 +102,7 @@ protocol working, and it is worth more than the ten substitutions above.
 
 ### Run by a follow-up PR, not by a unit (3)
 
-`kurenn/ferry` #18 (AC85, "type the five response bodies") numbered its
+`coba-ai/ferry` #18 (AC85, "type the five response bodies") numbered its
 mutations locally from M1 and cross-referenced three §6.2 rows explicitly. A
 reconciliation keyed on the number alone reports these as unreported, and one
 keyed on the number alone across *all* PRs puts that PR's local M1 on top of
@@ -332,7 +332,7 @@ fire; adding a test does the same for the reverse check. U7-7 failed exactly
 one example — `TestTheAttackTableAndTheseTestsAreTheSameSet` — which is the
 direction the recurring one-directional-subset defect omits.
 
-### AC67 / AC89 — `spec/docs/cli_docs_spec.rb` (in `kurenn/ferry`)
+### AC67 / AC89 — `spec/docs/cli_docs_spec.rb` (in `coba-ai/ferry`)
 
 Run: `FERRY_TEST_DATABASE=ferry_test_cli_u7 bundle exec rspec spec/docs/cli_docs_spec.rb`.
 

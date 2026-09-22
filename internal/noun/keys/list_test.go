@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/api"
-	"github.com/kurenn/ferry-cli/internal/fixture"
-	"github.com/kurenn/ferry-cli/internal/noun/keys"
+	"github.com/coba-ai/ferry-cli/internal/api"
+	"github.com/coba-ai/ferry-cli/internal/fixture"
+	"github.com/coba-ai/ferry-cli/internal/noun/keys"
 )
 
 // ---------------------------------------------------------------------------

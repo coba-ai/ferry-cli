@@ -27,7 +27,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/harness"
+	"github.com/coba-ai/ferry-cli/internal/harness"
 	"github.com/spf13/cobra"
 )
 

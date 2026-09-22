@@ -21,9 +21,9 @@ package transfers
 import (
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/cli/flight"
-	"github.com/kurenn/ferry-cli/internal/noun"
-	"github.com/kurenn/ferry-cli/internal/ulid"
+	"github.com/coba-ai/ferry-cli/internal/cli/flight"
+	"github.com/coba-ai/ferry-cli/internal/noun"
+	"github.com/coba-ai/ferry-cli/internal/ulid"
 )
 
 // Deps is what the money commands need beyond `noun.Deps`.

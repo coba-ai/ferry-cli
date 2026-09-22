@@ -9,10 +9,10 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/kurenn/ferry-cli/internal/creds"
-	"github.com/kurenn/ferry-cli/internal/fixture"
-	"github.com/kurenn/ferry-cli/internal/noun"
-	"github.com/kurenn/ferry-cli/internal/noun/auth"
+	"github.com/coba-ai/ferry-cli/internal/creds"
+	"github.com/coba-ai/ferry-cli/internal/fixture"
+	"github.com/coba-ai/ferry-cli/internal/noun"
+	"github.com/coba-ai/ferry-cli/internal/noun/auth"
 )
 
 // ---------------------------------------------------------------------------

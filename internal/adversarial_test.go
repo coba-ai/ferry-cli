@@ -585,7 +585,7 @@ func runCensus(root string) (*census, error) {
 
 // modulePath is this module, as go.mod declares it. Citations are written
 // relative to the module root, so the census strips it.
-const modulePath = "github.com/kurenn/ferry-cli"
+const modulePath = "github.com/coba-ai/ferry-cli"
 
 // absorb reads `go test -list` output.
 //

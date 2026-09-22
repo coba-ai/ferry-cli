@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
-	"github.com/kurenn/ferry-cli/internal/harness"
+	"github.com/coba-ai/ferry-cli/internal/harness"
 )
 
 // exitErr is the shape internal/cli's errors will have: an error carrying the

@@ -8,7 +8,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/fsx"
+	"github.com/coba-ai/ferry-cli/internal/fsx"
 )
 
 func TestWriteFileAtomicSyscallOrder(t *testing.T) {

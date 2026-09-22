@@ -42,18 +42,18 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kurenn/ferry-cli/internal/cli/flight"
-	"github.com/kurenn/ferry-cli/internal/fault"
-	"github.com/kurenn/ferry-cli/internal/noun"
-	"github.com/kurenn/ferry-cli/internal/noun/auth"
-	"github.com/kurenn/ferry-cli/internal/noun/commandq"
-	"github.com/kurenn/ferry-cli/internal/noun/corridors"
-	"github.com/kurenn/ferry-cli/internal/noun/keys"
-	nounruns "github.com/kurenn/ferry-cli/internal/noun/runs"
-	"github.com/kurenn/ferry-cli/internal/noun/transfers"
-	"github.com/kurenn/ferry-cli/internal/outcome"
-	"github.com/kurenn/ferry-cli/internal/render"
-	"github.com/kurenn/ferry-cli/internal/version"
+	"github.com/coba-ai/ferry-cli/internal/cli/flight"
+	"github.com/coba-ai/ferry-cli/internal/fault"
+	"github.com/coba-ai/ferry-cli/internal/noun"
+	"github.com/coba-ai/ferry-cli/internal/noun/auth"
+	"github.com/coba-ai/ferry-cli/internal/noun/commandq"
+	"github.com/coba-ai/ferry-cli/internal/noun/corridors"
+	"github.com/coba-ai/ferry-cli/internal/noun/keys"
+	nounruns "github.com/coba-ai/ferry-cli/internal/noun/runs"
+	"github.com/coba-ai/ferry-cli/internal/noun/transfers"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/render"
+	"github.com/coba-ai/ferry-cli/internal/version"
 )
 
 // DefaultSignals are the three signals §5.3 V4 and AC69 name.

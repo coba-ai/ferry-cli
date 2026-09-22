@@ -29,11 +29,11 @@ die() {
 	exit 1
 }
 
-: "${FERRY_E2E_RAILS_DIR:?set FERRY_E2E_RAILS_DIR to a checkout of kurenn/ferry. The app the suite drives is in that repository (A400), and this one cannot invent it.}"
+: "${FERRY_E2E_RAILS_DIR:?set FERRY_E2E_RAILS_DIR to a checkout of coba-ai/ferry. The app the suite drives is in that repository (A400), and this one cannot invent it.}"
 
 rails_dir="$(cd "$FERRY_E2E_RAILS_DIR" && pwd)"
 
-[ -f "$rails_dir/bin/rails" ] || die "$rails_dir has no bin/rails, so it is not a checkout of kurenn/ferry."
+[ -f "$rails_dir/bin/rails" ] || die "$rails_dir has no bin/rails, so it is not a checkout of coba-ai/ferry."
 
 # The app's own defaults live in its config/database.yml; these only fill in
 # what a local docker container needs and what CI's service containers publish.
@@ -104,9 +104,9 @@ step "Building the two binaries"
 # would never run the code that ships.
 contract_sha256="$(sha256sum "$cli_dir/contract/openapi.yaml" | cut -d' ' -f1)"
 stamps=(
-	-X "github.com/kurenn/ferry-cli/internal/version.Version=0.0.0-e2e"
-	-X "github.com/kurenn/ferry-cli/internal/version.Commit=$(git -C "$cli_dir" rev-parse HEAD)"
-	-X "github.com/kurenn/ferry-cli/internal/version.ContractSHA256=$contract_sha256"
+	-X "github.com/coba-ai/ferry-cli/internal/version.Version=0.0.0-e2e"
+	-X "github.com/coba-ai/ferry-cli/internal/version.Commit=$(git -C "$cli_dir" rev-parse HEAD)"
+	-X "github.com/coba-ai/ferry-cli/internal/version.ContractSHA256=$contract_sha256"
 )
 
 (cd "$cli_dir" && CGO_ENABLED=0 go build -trimpath -ldflags "${stamps[*]}" -o "$work/ferry" ./cmd/ferry)

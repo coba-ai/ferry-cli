@@ -31,7 +31,7 @@ import (
 // that the `brews` block AC65 asks for is deprecated to the point where
 // `goreleaser check` fails on it (A416). What is still unverified is the half
 // that needs a tag and two repositories — the GitHub Release and the push to
-// `kurenn/homebrew-tap`. A415 records that.
+// `coba-ai/homebrew-tap`. A415 records that.
 
 func goreleaserBinary(t *testing.T) string {
 	t.Helper()

@@ -3,7 +3,7 @@ package render
 import (
 	"fmt"
 
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // Error is a command failure that carries the process exit code.

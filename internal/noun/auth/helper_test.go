@@ -12,13 +12,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/kurenn/ferry-cli/internal/creds"
-	"github.com/kurenn/ferry-cli/internal/fixture"
-	"github.com/kurenn/ferry-cli/internal/fsx"
-	"github.com/kurenn/ferry-cli/internal/harness"
-	"github.com/kurenn/ferry-cli/internal/noun"
-	"github.com/kurenn/ferry-cli/internal/noun/auth"
-	"github.com/kurenn/ferry-cli/internal/xdg"
+	"github.com/coba-ai/ferry-cli/internal/creds"
+	"github.com/coba-ai/ferry-cli/internal/fixture"
+	"github.com/coba-ai/ferry-cli/internal/fsx"
+	"github.com/coba-ai/ferry-cli/internal/harness"
+	"github.com/coba-ai/ferry-cli/internal/noun"
+	"github.com/coba-ai/ferry-cli/internal/noun/auth"
+	"github.com/coba-ai/ferry-cli/internal/xdg"
 )
 
 // No test in this package calls t.Parallel(): `harness.Run` swaps the process

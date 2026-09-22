@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/cli"
+	"github.com/coba-ai/ferry-cli/internal/cli"
 )
 
 // AC41: in `--output json` mode, **exactly one** JSON document reaches

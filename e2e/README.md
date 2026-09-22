@@ -14,7 +14,7 @@ thing that gets fixed in the workflow and not in the README.
 
 ## What it needs, and does not install
 
-A Postgres 18 and a Redis, a checkout of `kurenn/ferry` with `bundle install`
+A Postgres 18 and a Redis, a checkout of `coba-ai/ferry` with `bundle install`
 already run, and a Go toolchain. Postgres must be 18: every FERRY primary key
 defaults to `uuidv7()`.
 

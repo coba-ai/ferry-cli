@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/api"
-	"github.com/kurenn/ferry-cli/internal/fault"
-	"github.com/kurenn/ferry-cli/internal/outcome"
-	"github.com/kurenn/ferry-cli/internal/render"
-	"github.com/kurenn/ferry-cli/internal/runs"
-	"github.com/kurenn/ferry-cli/internal/version"
+	"github.com/coba-ai/ferry-cli/internal/api"
+	"github.com/coba-ai/ferry-cli/internal/fault"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/render"
+	"github.com/coba-ai/ferry-cli/internal/runs"
+	"github.com/coba-ai/ferry-cli/internal/version"
 )
 
 // report writes the one document, or the one text block, and returns the

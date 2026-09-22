@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/api"
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/api"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // AC27 and C14. What is resent, what is not, and what a resend must look like.

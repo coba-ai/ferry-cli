@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/runs"
+	"github.com/coba-ai/ferry-cli/internal/runs"
 )
 
 // AC50: a 202 is recorded before the first poll, the waits are the ones

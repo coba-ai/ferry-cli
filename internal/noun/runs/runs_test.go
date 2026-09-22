@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/cli"
-	"github.com/kurenn/ferry-cli/internal/fsx"
-	"github.com/kurenn/ferry-cli/internal/harness"
-	"github.com/kurenn/ferry-cli/internal/noun"
-	"github.com/kurenn/ferry-cli/internal/runs"
+	"github.com/coba-ai/ferry-cli/internal/cli"
+	"github.com/coba-ai/ferry-cli/internal/fsx"
+	"github.com/coba-ai/ferry-cli/internal/harness"
+	"github.com/coba-ai/ferry-cli/internal/noun"
+	"github.com/coba-ai/ferry-cli/internal/runs"
 )
 
 // AC57's other two claims — the ones about removing a record and refusing a

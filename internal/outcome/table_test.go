@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // AC20. One example per row of PLAN §5.6, asserting the whole tuple —

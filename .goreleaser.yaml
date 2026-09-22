@@ -44,9 +44,9 @@ builds:
       # `.github/workflows/cli-release.yml` both compute it with sha256sum over
       # contract/openapi.yaml.
       - -s -w
-      - -X github.com/kurenn/ferry-cli/internal/version.Version={{ .Version }}
-      - -X github.com/kurenn/ferry-cli/internal/version.Commit={{ .FullCommit }}
-      - -X github.com/kurenn/ferry-cli/internal/version.ContractSHA256={{ .Env.CONTRACT_SHA256 }}
+      - -X github.com/coba-ai/ferry-cli/internal/version.Version={{ .Version }}
+      - -X github.com/coba-ai/ferry-cli/internal/version.Commit={{ .FullCommit }}
+      - -X github.com/coba-ai/ferry-cli/internal/version.ContractSHA256={{ .Env.CONTRACT_SHA256 }}
 
     goos:
       - darwin
@@ -90,7 +90,7 @@ release:
 # it writes is `Casks/ferry.rb`.
 #
 # One consequence worth stating rather than discovering: Homebrew on Linux
-# cannot install a cask. `brew install kurenn/tap/ferry` is macOS-only now, and
+# cannot install a cask. `brew install coba-ai/tap/ferry` is macOS-only now, and
 # the Linux tarball from the GitHub Release is the install route there. A `brews`
 # block would still have served Linuxbrew — that is what was given up, and it was
 # given up because the alternative is a release that `goreleaser check` fails.
@@ -100,15 +100,15 @@ homebrew_casks:
       - ferry
 
     repository:
-      owner: kurenn
+      owner: coba-ai
       name: homebrew-tap
       branch: main
       # A cross-repository push needs a token this repository does not have.
-      # `kurenn/homebrew-tap` is the only thing standing between a `cli/v*` tag
+      # `coba-ai/homebrew-tap` is the only thing standing between a `cli/v*` tag
       # and a published cask — see README.md "Releasing" and amendment A414.
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
 
-    homepage: https://github.com/kurenn/ferry-cli
+    homepage: https://github.com/coba-ai/ferry-cli
     description: Move money through FERRY from a terminal or a script
 
     binaries:

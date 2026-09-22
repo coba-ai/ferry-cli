@@ -1,13 +1,13 @@
 # Documentation defects still present
 
-AC89. `PLAN.md` §1.4 is a table of defects found in `kurenn/ferry`'s
+AC89. `PLAN.md` §1.4 is a table of defects found in `coba-ai/ferry`'s
 `docs/api/` during the CLI planning pass. This file lists the ones **still
 there**, and nothing else.
 
 A list of fixed defects is worse than no list: it is accurate the day it is
 written and fiction a month later, because nothing re-reads it. So the
 authority is not this file — it is
-[`spec/docs/cli_docs_spec.rb`](https://github.com/kurenn/ferry/blob/main/spec/docs/cli_docs_spec.rb)
+[`spec/docs/cli_docs_spec.rb`](https://github.com/coba-ai/ferry/blob/main/spec/docs/cli_docs_spec.rb)
 in the API repository, which measures every §1.4 item against the document it
 is about and fails in both directions: a row it records as fixed that the
 measurement finds again is red, and a row it records as still present that the
@@ -18,8 +18,8 @@ right.
 
 ## Why the list and the measurement are in different repositories
 
-A400 moved the CLI, this plan and this file into `kurenn/ferry-cli`. The
-documents they are *about* stayed in `kurenn/ferry`. A spec here would have to
+A400 moved the CLI, this plan and this file into `coba-ai/ferry-cli`. The
+documents they are *about* stayed in `coba-ai/ferry`. A spec here would have to
 reach into a sibling checkout to read them, which is the coupling A400 existed
 to remove and which A404 showed breaks in a worktree.
 
@@ -46,7 +46,7 @@ ignores them.
 
 **Why it is not fixed here:** the sentence is a correct description of most of
 the API and the fix is to narrow it, which is a documentation change in
-`kurenn/ferry` that U7 could make. It is left open deliberately, because the
+`coba-ai/ferry` that U7 could make. It is left open deliberately, because the
 alternative reading — that execute *should* refuse unknown keys, and the
 documentation is describing the intended behaviour — is a money-path API
 change and not U7's to decide. P2 recorded the measurement; the decision is

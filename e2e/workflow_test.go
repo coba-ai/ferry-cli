@@ -34,6 +34,19 @@ const (
 	releaseWorkflow = "../.github/workflows/cli-release.yml"
 )
 
+// The API repository, written once.
+//
+// Two things name it and they are not the same kind of thing: `ci.yml`'s
+// `cli-e2e` job checks it out, and `e2e/ci-preflight.sh`'s refusal tells an
+// operator which repository to put a deploy key on. Both are asserted below,
+// and before A435 each carried its own literal — so a rename could have
+// updated the checkout and left the refusal pointing an operator at a
+// repository that no longer answers, with both tests green. One constant here
+// is still a pin rather than a tautology: the values it is compared against
+// are read out of the workflow and out of the script's own output, and this
+// file is neither.
+const apiRepository = "coba-ai/ferry"
+
 type workflow struct {
 	Name string `yaml:"name"`
 
@@ -525,7 +538,7 @@ func TestThePreflightRefusalNamesTheSecretAndTheLocalAlternative(t *testing.T) {
 		"name the secret an operator must add": "FERRY_API_REPO_SSH_KEY",
 		"say how to make the key":              "ssh-keygen",
 		"say the key must be read-only":        "read-only",
-		"name the repository it reads":         "kurenn/ferry",
+		"name the repository it reads":         apiRepository,
 		"say the suite can be run locally":     "e2e/run.sh",
 		"say which criteria are unenforced":    "AC61",
 	} {
@@ -574,7 +587,7 @@ func toString(v any) string {
 //
 // The reason to prefer a deploy key over a fine-grained personal access token
 // is the blast radius: read-only, and scoped to the one repository, so the
-// credential in play during an e2e run cannot write to `kurenn/ferry` and
+// credential in play during an e2e run cannot write to `coba-ai/ferry` and
 // cannot reach anything else its creator can see. A token is only *promising*
 // not to do those things, and the promise is invisible from here — the
 // workflow looks identical either way.
@@ -596,7 +609,7 @@ func TestTheAPIIsCheckedOutWithTheDeployKeyAndNothingBroader(t *testing.T) {
 	var found bool
 
 	for _, step := range e2e.Steps {
-		if step.With["repository"] != "kurenn/ferry" {
+		if step.With["repository"] != apiRepository {
 			continue
 		}
 
@@ -619,9 +632,10 @@ func TestTheAPIIsCheckedOutWithTheDeployKeyAndNothingBroader(t *testing.T) {
 	// The floor. Without it this passes over a job that stopped checking out
 	// the API at all, which is the state in which the e2e suite cannot run.
 	if !found {
-		t.Fatalf("no step in `cli-e2e` checks out kurenn/ferry, so either the suite no longer "+
+		t.Fatalf("no step in `cli-e2e` checks out %s, so either the suite no longer "+
 			"drives a real app or this reader has stopped parsing `with:` — and both of "+
-			"those make every other assertion in %s about the e2e job vacuous", ciWorkflow)
+			"those make every other assertion in %s about the e2e job vacuous",
+			apiRepository, ciWorkflow)
 	}
 }
 
@@ -662,7 +676,7 @@ func TestTheRubyVersionIsAVersionAndNotAPath(t *testing.T) {
 
 			if version == "" {
 				t.Errorf("job %s sets no ruby-version, so the Ruby installed is whatever the "+
-					"runner image defaults to rather than the one kurenn/ferry pins", name)
+					"runner image defaults to rather than the one coba-ai/ferry pins", name)
 			}
 		}
 	}

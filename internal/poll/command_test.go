@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // A394: `Command` had no Go struct, so `state`, `last_error` and

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/version"
+	"github.com/coba-ai/ferry-cli/internal/version"
 )
 
 // AC15 pins the User-Agent shape. The grammar is asserted here rather than
