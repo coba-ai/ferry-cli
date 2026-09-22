@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kurenn/ferry-cli/internal/noun"
-	"github.com/kurenn/ferry-cli/internal/outcome"
-	"github.com/kurenn/ferry-cli/internal/render"
+	"github.com/coba-ai/ferry-cli/internal/noun"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/render"
 )
 
 // moneyFlagSet says which of the money flags a verb declares. A simulate has

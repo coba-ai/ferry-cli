@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/fixture"
+	"github.com/coba-ai/ferry-cli/internal/fixture"
 )
 
 // Every negative control in this package is a *corruption of the committed

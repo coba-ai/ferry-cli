@@ -1,6 +1,6 @@
 # FERRY CLI
 
-The Go command line client for the [FERRY API](https://github.com/kurenn/ferry).
+The Go command line client for the [FERRY API](https://github.com/coba-ai/ferry).
 
 ## Status
 
@@ -46,11 +46,11 @@ Needs a Postgres 18, a Redis and a checkout of the API repository. Full
 instructions, including the two `docker run` lines, are in `e2e/README.md`.
 
 **CI runs this suite via a read-only deploy key.** A400 moved the CLI into this
-repository and left the Rails app it drives in `kurenn/ferry`, which is private;
+repository and left the Rails app it drives in `coba-ai/ferry`, which is private;
 `GITHUB_TOKEN` is scoped to one repository, so a job here cannot check that one
 out. The credential is a deploy key rather than a personal access token because
 it is read-only and scoped to that single repository: it cannot write to
-`kurenn/ferry` and cannot reach anything else its creator can see, which a
+`coba-ai/ferry` and cannot reach anything else its creator can see, which a
 fine-grained token is only promising not to do.
 
 If the key is ever rotated or revoked, `cli-e2e-preflight` goes red rather than
@@ -59,8 +59,8 @@ reads as a completed check, which is coverage that is not coverage. To restore
 it, an operator with access to both repositories runs:
 
     ssh-keygen -t ed25519 -N '' -C 'ferry-cli CI' -f ./key
-    gh repo deploy-key add key.pub --repo kurenn/ferry   # read-only
-    gh secret set FERRY_API_REPO_SSH_KEY --repo kurenn/ferry-cli < key
+    gh repo deploy-key add key.pub --repo coba-ai/ferry   # read-only
+    gh secret set FERRY_API_REPO_SSH_KEY --repo coba-ai/ferry-cli < key
     shred -u key key.pub
 
 The last line matters: the private half should exist in exactly one place, which
@@ -72,20 +72,20 @@ Recorded as amendments A411 and A424.
 
 Tags are `v<semver>`. Pushing one runs `.github/workflows/cli-release.yml`, which
 builds the four targets with goreleaser, attaches `checksums.txt`, creates the
-GitHub Release and pushes `Casks/ferry.rb` to `kurenn/homebrew-tap`.
+GitHub Release and pushes `Casks/ferry.rb` to `coba-ai/homebrew-tap`.
 
     git tag v0.1.0 && git push origin v0.1.0
 
 Before the first tag, an operator must add the Actions secret
 `HOMEBREW_TAP_GITHUB_TOKEN` — a token with `Contents: write` on
-`kurenn/homebrew-tap`. `GITHUB_TOKEN` cannot write to another repository, and
+`coba-ai/homebrew-tap`. `GITHUB_TOKEN` cannot write to another repository, and
 without this one goreleaser fails the Homebrew step *after* it has already
 published the GitHub Release, leaving a half-done release. Recorded as A414.
 
 Two things about the release worth knowing before you cut one:
 
 - It is a **cask**, not a formula. `brews` is deprecated and `goreleaser check`
-  fails on it (A416). Casks are macOS-only, so `brew install kurenn/tap/ferry`
+  fails on it (A416). Casks are macOS-only, so `brew install coba-ai/tap/ferry`
   works on macOS and Linux users install the tarball from the GitHub Release.
 - The binaries are unsigned and unnotarised (PLAN §10.1 row 7). The cask clears
   the macOS quarantine attribute on install, which is what makes an unsigned

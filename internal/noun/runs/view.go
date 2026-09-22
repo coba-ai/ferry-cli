@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/render"
-	"github.com/kurenn/ferry-cli/internal/runs"
+	"github.com/coba-ai/ferry-cli/internal/render"
+	"github.com/coba-ai/ferry-cli/internal/runs"
 )
 
 // redact removes every secret-shaped run from text (AC57, C6).

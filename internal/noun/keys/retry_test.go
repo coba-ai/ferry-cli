@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/api"
-	"github.com/kurenn/ferry-cli/internal/noun"
+	"github.com/coba-ai/ferry-cli/internal/api"
+	"github.com/coba-ai/ferry-cli/internal/noun"
 )
 
 // ---------------------------------------------------------------------------

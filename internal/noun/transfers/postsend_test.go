@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/fault"
-	"github.com/kurenn/ferry-cli/internal/runs"
+	"github.com/coba-ai/ferry-cli/internal/fault"
+	"github.com/coba-ai/ferry-cli/internal/runs"
 )
 
 // AC69, C17: an abnormal exit after a money request may have left is exit 6,

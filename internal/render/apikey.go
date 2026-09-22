@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/kurenn/ferry-cli/internal/api"
+	"github.com/coba-ai/ferry-cli/internal/api"
 )
 
 // APIKey writes one key.

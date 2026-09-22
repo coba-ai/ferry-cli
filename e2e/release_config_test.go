@@ -33,9 +33,132 @@ var releasePlatforms = []string{
 // The version package's variables goreleaser must stamp. `ferry version` prints
 // all three, and the User-Agent carries two of them.
 var stampedVariables = []string{
-	"github.com/kurenn/ferry-cli/internal/version.Version",
-	"github.com/kurenn/ferry-cli/internal/version.Commit",
-	"github.com/kurenn/ferry-cli/internal/version.ContractSHA256",
+	"github.com/coba-ai/ferry-cli/internal/version.Version",
+	"github.com/coba-ai/ferry-cli/internal/version.Commit",
+	"github.com/coba-ai/ferry-cli/internal/version.ContractSHA256",
+}
+
+// The other two files that spell the module path out in an `-X` stamp, and
+// go.mod, which is the one that decides it.
+const (
+	goModFile    = "../go.mod"
+	e2eRunScript = "run.sh"
+)
+
+var moduleLine = regexp.MustCompile(`(?m)^module\s+(\S+)$`)
+
+func declaredModulePath(t *testing.T) string {
+	t.Helper()
+
+	b, err := os.ReadFile(goModFile)
+	if err != nil {
+		t.Fatalf("read %s: %v", goModFile, err)
+	}
+
+	m := moduleLine.FindStringSubmatch(string(b))
+	if m == nil {
+		t.Fatalf("%s declares no `module` line, so there is nothing to hold the stamps to", goModFile)
+	}
+
+	return m[1]
+}
+
+// A435: the module path is written in four places and the linker forgives
+// three of them.
+//
+// `go.mod` decides it. `.goreleaser.yaml` and `e2e/run.sh` repeat it inside
+// `-ldflags -X <path>.Version=…`, and `-X` naming a symbol that does not exist
+// is not an error: measured against go1.24.13, `go build -ldflags "-X
+// github.com/wrong/path/internal/version.Version=9.9.9"` exits 0 and the binary
+// prints `ferry 0.0.0-dev` / `contract unknown`. So a rename that updates
+// `go.mod` and every import — which it must, or nothing compiles — and misses
+// these two produces a green release of a binary that cannot say which contract
+// it was built against. That is the exact outcome
+// `TestTheContractDigestIsStampedFromTheEnvironmentWithNoDefault` exists to
+// prevent, reached by a route it does not watch: it pins the *template*, and a
+// correct template under a stale import path stamps nothing.
+//
+// `e2e/version_test.go` writes the path a third time and needs no pin here,
+// because it asserts the stamped values come back out of `ferry version` — a
+// stale path there fails on its own. Nothing reads the version of the binary
+// `e2e/run.sh` builds, which is why that one is listed.
+//
+// Held equal to go.mod rather than to a literal: the literal pin is
+// `stampedVariables` above, which this also checks, so "the module was renamed
+// and a copy was missed" and "the stamps name the wrong variables" stay two
+// different failures.
+func TestEveryVersionStampNamesTheModulePathGoModDeclares(t *testing.T) {
+	module := declaredModulePath(t)
+
+	// The floor under the literal pin: `stampedVariables` is what
+	// `TestTheReleaseStampsExactlyTheThreeVersionVariables` compares the
+	// config against, so a rename that updated the config and this file
+	// together but left go.mod behind would otherwise agree with itself.
+	for _, name := range stampedVariables {
+		if !strings.HasPrefix(name, module+"/") {
+			t.Errorf("the expected stamp %q is not under the module %s declares (%s). "+
+				"Either go.mod was renamed and this list was not, or the reverse",
+				name, goModFile, module)
+		}
+	}
+
+	stamps := stampsIn(loadGoreleaser(t).Builds[0].Ldflags)
+	if len(stamps) == 0 {
+		t.Fatalf("no -X stamps were read out of %s, so this check would be vacuous", goreleaserFile)
+	}
+
+	for name := range stamps {
+		if !strings.HasPrefix(name, module+"/") {
+			t.Errorf("%s stamps %q, which is not under the module %s declares (%s). The linker "+
+				"ignores an -X naming a symbol that is not there, so this builds, releases and "+
+				"ships a binary printing `contract unknown`",
+				goreleaserFile, name, goModFile, module)
+		}
+	}
+
+	script, err := os.ReadFile(e2eRunScript)
+	if err != nil {
+		t.Fatalf("read e2e/%s: %v", e2eRunScript, err)
+	}
+
+	found := 0
+
+	for _, part := range splitLdflag(strings.ReplaceAll(string(script), "\n", " ")) {
+		m := ldflagX.FindStringSubmatch(strings.Trim(part, `"`))
+		if m == nil {
+			continue
+		}
+
+		found++
+
+		if name := strings.Trim(m[1], `"`); !strings.HasPrefix(name, module+"/") {
+			t.Errorf("e2e/%s stamps %q, which is not under the module %s declares (%s)",
+				e2eRunScript, name, goModFile, module)
+		}
+	}
+
+	// The floor: the reader above is a regexp over a shell script, and a
+	// rewrite of how `stamps=(…)` is spelled would make every check in this
+	// half pass by matching nothing.
+	if found != len(stampedVariables) {
+		t.Errorf("read %d -X stamps out of e2e/%s, want %d; the suite builds the binary every "+
+			"other e2e test drives, and nothing reads its version",
+			found, e2eRunScript, len(stampedVariables))
+	}
+
+	// The cask's homepage is the fourth spelling of the owner, and the only
+	// one a user sees. Nothing breaks when it is stale — `brew info ferry`
+	// just links to a 404 — which is why it needs holding here rather than
+	// noticing later.
+	casks := loadGoreleaser(t).HomebrewCasks
+	if len(casks) != 1 {
+		t.Fatalf("%s declares %d homebrew_casks blocks, want 1", goreleaserFile, len(casks))
+	}
+
+	if cask := casks[0]; cask.Homepage != "https://"+module {
+		t.Errorf("the cask's homepage is %q, want %q — the module %s declares",
+			cask.Homepage, "https://"+module, goModFile)
+	}
 }
 
 type goreleaserConfig struct {
@@ -58,6 +181,7 @@ type goreleaserConfig struct {
 	// `goreleaser check` fails on it, which `release_test.go` measured.
 	HomebrewCasks []struct {
 		Name       string   `yaml:"name"`
+		Homepage   string   `yaml:"homepage"`
 		Binaries   []string `yaml:"binaries"`
 		Repository struct {
 			Owner string `yaml:"owner"`
@@ -187,7 +311,7 @@ func TestTheContractDigestIsStampedFromTheEnvironmentWithNoDefault(t *testing.T)
 
 	stamps := stampsIn(build.Ldflags)
 
-	value, ok := stamps["github.com/kurenn/ferry-cli/internal/version.ContractSHA256"]
+	value, ok := stamps["github.com/coba-ai/ferry-cli/internal/version.ContractSHA256"]
 	if !ok {
 		t.Fatalf("ContractSHA256 is not stamped at all (ldflags: %v)", build.Ldflags)
 	}
@@ -235,18 +359,18 @@ func TestTheCaskGoesToTheDeclaredTap(t *testing.T) {
 
 	cask := cfg.HomebrewCasks[0]
 
-	if cask.Repository.Owner != "kurenn" || cask.Repository.Name != "homebrew-tap" {
-		t.Errorf("the cask goes to %s/%s, want kurenn/homebrew-tap (AC65)",
+	if cask.Repository.Owner != "coba-ai" || cask.Repository.Name != "homebrew-tap" {
+		t.Errorf("the cask goes to %s/%s, want coba-ai/homebrew-tap (AC65)",
 			cask.Repository.Owner, cask.Repository.Name)
 	}
 
 	// AC65 says `ferry.rb`; the name decides the file and `brew install
-	// kurenn/tap/ferry`. The directory is not asserted because casks have only
+	// coba-ai/tap/ferry`. The directory is not asserted because casks have only
 	// one valid home and goreleaser defaults to it — pinning `Casks` here would
 	// be pinning a default the tool owns.
 	if cask.Name != "ferry" {
 		t.Errorf("the cask is named %q, want ferry (AC65: ferry.rb, `brew install "+
-			"kurenn/tap/ferry`)", cask.Name)
+			"coba-ai/tap/ferry`)", cask.Name)
 	}
 
 	assertSetsEqual(t, "binaries the cask installs", []string{"ferry"}, cask.Binaries)

@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// Set with -ldflags "-X github.com/kurenn/ferry-cli/internal/version.Version=..."
+// Set with -ldflags "-X github.com/coba-ai/ferry-cli/internal/version.Version=..."
 var (
 	// Version is the semantic version of the release, without a leading "v".
 	Version = "0.0.0-dev"

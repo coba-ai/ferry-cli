@@ -3,7 +3,7 @@
 **Slice:** `plan/cli` · **Revision 2.1** · **Base:** `f476389` (`main`; v1 was
 planned at `8c8abb9`, v2 at `3239f06`)
 **Language:** Go (fixed) · **Binary:** `ferry` (fixed) · **Distribution:**
-Homebrew, tap `kurenn/tap` (fixed) · **Module:** `github.com/kurenn/ferry-cli` (A400)
+Homebrew, tap `coba-ai/tap` (fixed) · **Module:** `github.com/coba-ai/ferry-cli` (A400)
 
 This plan covers the first real consumer of the FERRY API: a single static Go
 binary, `ferry`, that a human at a terminal or a program capturing stdout can
@@ -823,7 +823,7 @@ are AC69 onward. Go test files are under `cli/`; Ruby specs under `spec/`.
   with `CGO_ENABLED=0`; `ferry version` prints version, commit, Go version and
   the `openapi.yaml` sha256.** *Test:* `cli/e2e/release_test.go`. *Defends:* —.
 - **AC65 — `cli-release.yml` triggers only on tags matching `cli/v*`, carries
-  `timeout-minutes`, and publishes `Formula/ferry.rb` to `kurenn/homebrew-tap`.**
+  `timeout-minutes`, and publishes `Formula/ferry.rb` to `coba-ai/homebrew-tap`.**
   *Spec:* `spec/ci/workflow_spec.rb`. *Defends:* —.
 
 ### 3.8 Contract schemas (U8, Ruby) *(v2)*
@@ -1013,7 +1013,7 @@ JSON document byte-for-byte; `--body` plus any field flag is a usage error.
 
 | Landing copy | Plan |
 | --- | --- |
-| `brew install ferry` | `brew install kurenn/tap/ferry` (§5.15; settled, §8 D-3). **Copy is being changed.** |
+| `brew install ferry` | `brew install coba-ai/tap/ferry` (§5.15; settled, §8 D-3). **Copy is being changed.** |
 | `ferry auth login --env sandbox` | Kept, with `--api URL` required (§8 D-4). `--env` asserts the pasted token's environment. There is no login endpoint (§1.2.15). |
 | `ferry transfers create --from wlt_… --to ext_… --amount 100.00 --asset usdc` | Kept as `ferry transfers create`, dry-run by default; the snippet needs `--customer`, `--from-type`, `--to-type`, both assets, `--to-network`, `--to-account-holder`. **Copy change required.** |
 | `--broadcast` "is the only way money leaves" | Kept exactly (§5.5). |
@@ -1565,7 +1565,7 @@ AC86.
 
 ### 5.13 Repository layout, module, dependencies
 
-Its own repository, `kurenn/ferry-cli`, module `github.com/kurenn/ferry-cli` (§8 D-2, amended by A400).
+Its own repository, `coba-ai/ferry-cli`, module `github.com/coba-ai/ferry-cli` (§8 D-2, amended by A400).
 
 ```
 cli/
@@ -1633,8 +1633,8 @@ than `fixture`/`mock`.
   (no API URL is injected — §8 D-4), four targets, `checksums.txt`, GitHub
   Release on tag (`cli-release.yml`, `timeout-minutes: 15`).
 - **Homebrew**: goreleaser's `brews` block pushes `Formula/ferry.rb` to
-  `kurenn/homebrew-tap` with `HOMEBREW_TAP_GITHUB_TOKEN`. Install: `brew install
-  kurenn/tap/ferry`.
+  `coba-ai/homebrew-tap` with `HOMEBREW_TAP_GITHUB_TOKEN`. Install: `brew install
+  coba-ai/tap/ferry`.
 - **Signing**: §10.1 row 7.
 
 ### 5.16 What the CLI can do today
@@ -1878,11 +1878,11 @@ comes from, not whether an automated caller may give it. An agent that passes
 
 ### 8.1 Decisions settled in revision 2
 
-- **D-1 — GitHub organisation `kurenn`**; the repository is
-  `github.com/kurenn/ferry`.
-- **D-2 — Module path `github.com/kurenn/ferry-cli`.** (A400 moved this out of the API repository; it was `github.com/kurenn/ferry/cli`.)
-- **D-3 — Homebrew tap `kurenn/tap`**; install line `brew install
-  kurenn/tap/ferry`. The landing pages' bare `brew install ferry` is being
+- **D-1 — GitHub organisation `coba-ai`**; the repository is
+  `github.com/coba-ai/ferry`.
+- **D-2 — Module path `github.com/coba-ai/ferry-cli`.** (A400 moved this out of the API repository; it was `github.com/kurenn/ferry/cli`. A435 renamed the owner.)
+- **D-3 — Homebrew tap `coba-ai/tap`**; install line `brew install
+  coba-ai/tap/ferry`. The landing pages' bare `brew install ferry` is being
   changed.
 - **D-4 — No baked-in API URL.** There is no production host; a default that
   later resolves to a real one is a money risk. `auth login` requires `--api
@@ -1934,7 +1934,7 @@ comes from, not whether an automated caller may give it. An agent that passes
   command id.
 - **CS-8 — *(settled, D-1/D-2)*.**
 - **CS-9 — *(settled, D-4)*.**
-- **CS-10 — goreleaser can push a formula to `kurenn/homebrew-tap` with
+- **CS-10 — goreleaser can push a formula to `coba-ai/homebrew-tap` with
   `HOMEBREW_TAP_GITHUB_TOKEN`.** Blocks the release workflow, not CI.
 - **CS-11 — `syscall.Flock` with `LOCK_EX|LOCK_NB` on a sidecar file behaves
   as required on macOS and Linux.** U1 asserts with two processes after a
@@ -2178,6 +2178,14 @@ U6 `A360–A369`, U7 `A370–A379`, U8 `A380–A389`, free `A390–A399`. Revisi
 plan amendments are `P1–P30` (planning, pre-implementation) so they do not
 consume the implementation block. Post-split follow-up work continues from
 `A400`; the mutation-audit closure holds `A426–A439` and used `A426–A433`.
+`A434` went to the ownership-lint fix and the `coba-ai` rename holds
+`A435–A444`.
+
+Rows written before A435 name the `kurenn` owner and keep it. They are a
+record of what happened under the name the repositories had at the time, and
+rewriting them would make the log agree with the present at the cost of being
+a history of nothing. Everything that tells a reader where to *go* — §0, §5,
+§8's decisions, the README, the workflows, the scripts — was renamed.
 
 | # | Section / AC | What changed | Finding | Mutation now covering it |
 | --- | --- | --- | --- | --- |
@@ -2315,3 +2323,4 @@ Implementation amendments (`A300+`) begin when implementation does.
 | A432 | §6.2 M70, §3.7 AC63, `internal/noun/precheck.go`'s `Requirements` | **M70 now has a table row as well as a verdict, and both forms reproduce.** Flipping `OpSimulateTransfer` alone to `RequireEither` **survives** the end-to-end suite and is killed only by the unit census `TestTheRequirementTableMatchesTheControllers`; flipping all three money rows (`simulate`, `execute`, `get_command`) is killed by `TestAPATOnlyProfileIsRefusedBeforeAnyRequestLeaves`, which observes `http.status` 403 where null is required and a run minted where none should be. The reason is the one U6 gave: `begin` acquires a `get_command` session alongside the money operation (`money.go:112`) and `get_command` is independently `RequireAPIKey`, so a PAT-only profile is still refused locally with the simulate row opened. | The pair is the useful artefact, not either row alone. AC63's behavioural control is sensitive only to all three rows together, so it cannot tell you that any *individual* row is load-bearing; the table census can, but it is a restatement of the table rather than a test of behaviour. Knowing which control answers which question is the difference between "AC63 covers the pre-check" and the truth, which is that two different tests cover two different halves of it. A verdict living only in prose is what stopped anyone noticing. | M70 (survived e2e, killed by the census) and M70b (killed by AC63's refusal), both tabulated in `docs/MUTATIONS.md` |
 | A433 | §11.2, §6.2 rows M59, M60, M61, M69, M70, M71, M116, M117 (U6's eight, A371) | **All seven of U6's measurable rows reproduce, and A371's finding is untouched by that.** Each was re-run as a prior claim to verify rather than as truth, after establishing a green baseline in the exact environment first, and each e2e verdict was confirmed to be an assertion firing — with the failure text read — rather than a harness fatal. Six KILLED and M117 SURVIVED, which is exactly what U6 reported. | Stating it plainly because the opposite conclusion is available and wrong: "the numbers were right, so the missing table was a formality". It was not. A371 is a finding about the *record*, and an unreconcilable report is a process defect whether or not it happens to be accurate — a reader in six months cannot tell a right unreconcilable report from a wrong one, which is the whole cost. The re-run also cost something to do properly: the shell this closure started in had a leaked `FERRY_DATABASE_USER=ferry` from an unrelated project's environment, which made the first baseline attempt fail at `db:prepare` — the same class of environment contamination that produced U6's six false KILLEDs, met before a single mutation was applied and fixed by pinning every variable in a file. | the seven rows, re-measured; `docs/MUTATIONS.md` records each verdict beside U6's for comparison |
 | A434 | `ownership_test.go`, `.gitignore` | **The ownership lint failed in the main checkout whenever a worktree existed, and every unit of this slice used one.** `walkFiles` walks the filesystem rather than git — deliberately, so an unstaged file cannot sail through — and it descended into `.worktrees/<branch>/`, reporting every file of that second checkout, all 74 recordings among them, as a file no unit owns. So `go test ./...` in the main checkout was red for the whole slice, on paths that are not this repository's content. It passed *inside* the worktrees, which have no `.worktrees/` of their own, and that is why six units did not see it. A nested checkout is now skipped in code, following `.git` rather than OWNERSHIP's ignored list: that list is for paths that are in the repository and belong to no unit, and a second checkout is neither. Also `.gitignore`d, which A423 had missed. | The same class as A404, and found the same way — by running the suite somewhere nobody had run it. A404 fixed this lint for someone working inside a worktree, because `.git` is a file there and only the directory form was skipped; the symmetric case, the main checkout while a worktree exists, was left. Both failures are the walk not understanding worktrees, and the second was reachable from the first. Worth stating because the fix for A404 was written as if it had finished the subject. | M-A434-1 (the skip removed, restoring the bug) KILLED. No floor of its own: M-A434-2b empties the walk without erroring and dies on the floor `walkFiles` already carries, so a second one would be a duplicate reading as independent evidence — measured rather than assumed. A first attempt, pointing the walk at a nonexistent root, was mis-anchored: `WalkDir` errors and `walkFiles` fatals before any floor runs |
+| A435 | §0, §3.7 AC65, §5.13, §5.15, §8 D-1/D-2/D-3, §9 CS-10; `go.mod` and every import; `.goreleaser.yaml`; `.github/workflows/ci.yml` and `cli-release.yml`; `e2e/run.sh`, `e2e/ci-preflight.sh`, `e2e/README.md`, `e2e/release_config_test.go`, `e2e/release_test.go`, `e2e/version_test.go`, `e2e/workflow_test.go`; `contract/SOURCE`'s repository line; `README.md`; `docs/DOC-DEFECTS.md`, `docs/MUTATIONS.md`; `internal/adversarial_test.go`'s `modulePath` | **Both repositories were transferred from the user `kurenn` to the organisation `coba-ai`, and the module path moved with them.** `github.com/kurenn/ferry-cli` → `github.com/coba-ai/ferry-cli` in `go.mod` and 333 imports across 117 files; `kurenn/ferry` → `coba-ai/ferry` in the `cli-e2e` checkout, the preflight's refusal message, `e2e/run.sh`'s two `FERRY_E2E_RAILS_DIR` errors, `contract/SOURCE`'s `repository` line and the prose; `kurenn/tap` and `kurenn/homebrew-tap` → `coba-ai/…`, so the install line is `brew install coba-ai/tap/ferry`. `contract/SOURCE`'s **digests are untouched** and none of `contract/openapi.yaml`, `contract/errors.md` or `testdata/recorded/` contains the owner, so a correct rename does not touch them — `contract_test.go` is the check that it did not. The tap still does not exist: A414 is unchanged except that the repository an operator must create is now `coba-ai/homebrew-tap`. `go.sum` is unchanged and no dependency was added. | **`go install` verifies the path `go.mod` declares against the path it resolved, and GitHub's redirect does not cover that.** Measured against the real repository at `main` (`c8a532e`), before this change: `go install github.com/coba-ai/ferry-cli/cmd/ferry@main` *downloads* — the redirect works, so the failure is not a 404 anyone would read as a missing repository — and then stops with `module declares its path as: github.com/kurenn/ferry-cli / but was required as: github.com/coba-ai/ferry-cli`. Left alone, the module line would have made the CLI uninstallable under the only name it now has, from a repository that clones fine. **The second finding is the one nothing was watching.** The module path is written in four places and the compiler holds only two of them: `go.mod` and the imports must agree or nothing builds, and `internal/adversarial_test.go`'s `modulePath` const fails loudly (`internal/runs is not in the census`) because the census strips it from citation paths. The other two are `-ldflags -X` stamps in `.goreleaser.yaml` and `e2e/run.sh`, and **the linker ignores an `-X` naming a symbol that is not there** — measured on go1.24.13, `go build -ldflags "-X github.com/kurenn/ferry-cli/internal/version.Version=9.9.9 …"` exits 0 and the binary prints `ferry 0.0.0-dev` / `contract unknown`. So a rename that did the compulsory half and missed those two would have produced a green release of a binary that cannot say which contract it was built against — which is exactly what `TestTheContractDigestIsStampedFromTheEnvironmentWithNoDefault` exists to prevent, reached by a route it cannot see: it pins the *template*, and a correct template under a stale import path stamps nothing. Nothing read the version of the binary `e2e/run.sh` builds either, so that copy had no check at all. | New: `TestEveryVersionStampNamesTheModulePathGoModDeclares` (`e2e/release_config_test.go`) holds `.goreleaser.yaml`, `e2e/run.sh` and this file's `stampedVariables` to the `module` line in `go.mod`, with a count floor on the shell reader. Six mutants, all KILLED with distinct messages: the `.goreleaser.yaml` stamps stale (1), `e2e/run.sh`'s stamps stale (2), `stampedVariables` stale (3), the cask `homepage` stale (4), one stamp deleted from `run.sh` — caught by the floor, not by the path check (5), and `go.mod` renamed on its own (6). Existing pins updated to the new strings and re-run: `TestTheAPIIsCheckedOutWithTheDeployKeyAndNothingBroader`, `TestThePreflightRefusalNamesTheSecretAndTheLocalAlternative`, `TestTheCaskGoesToTheDeclaredTap`, `TestTheReleaseStampsExactlyTheThreeVersionVariables`, `TestTheContractDigestIsStampedFromTheEnvironmentWithNoDefault`, `TestFerryVersionPrintsEveryPieceOfBuildIdentity`. |

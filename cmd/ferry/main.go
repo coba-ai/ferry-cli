@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kurenn/ferry-cli/internal/cli"
+	"github.com/coba-ai/ferry-cli/internal/cli"
 )
 
 // exitCoder is how an error carries a process exit code.

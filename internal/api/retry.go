@@ -3,7 +3,7 @@ package api
 import (
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // DefaultRetryBudget is `--retry-budget`'s default (§5.8).

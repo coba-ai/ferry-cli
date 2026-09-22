@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/render"
+	"github.com/coba-ai/ferry-cli/internal/render"
 )
 
 // AC42 — text mode prints a secret in exactly two places.

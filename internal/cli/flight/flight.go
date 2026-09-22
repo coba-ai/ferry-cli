@@ -36,7 +36,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // OutcomeFor builds an outcome for a class this CLI decided on its own —

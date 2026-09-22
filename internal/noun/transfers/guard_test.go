@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/fixture"
-	"github.com/kurenn/ferry-cli/internal/runs"
-	"github.com/kurenn/ferry-cli/internal/ulid"
+	"github.com/coba-ai/ferry-cli/internal/fixture"
+	"github.com/coba-ai/ferry-cli/internal/runs"
+	"github.com/coba-ai/ferry-cli/internal/ulid"
 )
 
 // C18 and the pre-send refusals. Everything in this file is a case where the

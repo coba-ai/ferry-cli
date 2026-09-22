@@ -49,9 +49,9 @@ func buildFerry(t *testing.T, goos, goarch string, stamp bool) string {
 	if stamp {
 		args = append(args, "-ldflags", strings.Join([]string{
 			"-s", "-w",
-			"-X github.com/kurenn/ferry-cli/internal/version.Version=" + stampedVersion,
-			"-X github.com/kurenn/ferry-cli/internal/version.Commit=" + stampedCommit,
-			"-X github.com/kurenn/ferry-cli/internal/version.ContractSHA256=" + stampedContract,
+			"-X github.com/coba-ai/ferry-cli/internal/version.Version=" + stampedVersion,
+			"-X github.com/coba-ai/ferry-cli/internal/version.Commit=" + stampedCommit,
+			"-X github.com/coba-ai/ferry-cli/internal/version.ContractSHA256=" + stampedContract,
 		}, " "))
 	}
 

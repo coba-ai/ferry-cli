@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/consent"
+	"github.com/coba-ai/ferry-cli/internal/consent"
 )
 
 // closed is an already-signalled interrupt channel.

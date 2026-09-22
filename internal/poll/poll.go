@@ -23,9 +23,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/api"
-	"github.com/kurenn/ferry-cli/internal/cli/flight"
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/api"
+	"github.com/coba-ai/ferry-cli/internal/cli/flight"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // Clock is the time this loop depends on. It is `api.Clock` under another

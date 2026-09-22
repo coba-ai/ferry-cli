@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/api"
-	"github.com/kurenn/ferry-cli/internal/noun/corridors"
-	"github.com/kurenn/ferry-cli/internal/render"
+	"github.com/coba-ai/ferry-cli/internal/api"
+	"github.com/coba-ai/ferry-cli/internal/noun/corridors"
+	"github.com/coba-ai/ferry-cli/internal/render"
 )
 
 // ---------------------------------------------------------------------------

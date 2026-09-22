@@ -6,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/fault"
+	"github.com/coba-ai/ferry-cli/internal/fault"
 )
 
 // The armed counterpart to `release_test.go`.

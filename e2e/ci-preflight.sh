@@ -43,30 +43,30 @@ printf 'credential=no\n' >>"$output"
 
 # `::error` puts this in the checks UI rather than only in the log, where it is
 # one click deep and stays visible after the log has scrolled.
-printf '::error title=No end-to-end coverage::AC61-AC63 are not enforced in CI. FERRY_API_REPO_SSH_KEY is not configured, so this repository cannot check out kurenn/ferry and the suite cannot run.\n'
+printf '::error title=No end-to-end coverage::AC61-AC63 are not enforced in CI. FERRY_API_REPO_SSH_KEY is not configured, so this repository cannot check out coba-ai/ferry and the suite cannot run.\n'
 
 cat >>"$summary" <<'MARKDOWN'
 ### The end-to-end suite did not run
 
 `AC61`, `AC62` and `AC63` drive the CLI against a running FERRY. Amendment
 `A400` moved the CLI into its own repository and left that app in
-`kurenn/ferry`, which is private, and `GITHUB_TOKEN` is scoped to this
+`coba-ai/ferry`, which is private, and `GITHUB_TOKEN` is scoped to this
 repository only.
 
 **To make this check pass**, an operator with access to both repositories must:
 
 1. Generate a keypair that exists for this and nothing else:
    `ssh-keygen -t ed25519 -N '' -C 'ferry-cli CI' -f ./key`
-2. Add `key.pub` to `kurenn/ferry` as a **read-only** deploy key
+2. Add `key.pub` to `coba-ai/ferry` as a **read-only** deploy key
    (*Settings → Deploy keys*), or
-   `gh repo deploy-key add key.pub --repo kurenn/ferry`.
+   `gh repo deploy-key add key.pub --repo coba-ai/ferry`.
 3. Add the private half to this repository as the secret
    `FERRY_API_REPO_SSH_KEY` (*Settings → Secrets and variables → Actions*),
-   or `gh secret set FERRY_API_REPO_SSH_KEY --repo kurenn/ferry-cli < key`.
+   or `gh secret set FERRY_API_REPO_SSH_KEY --repo coba-ai/ferry-cli < key`.
 4. Destroy the local copies: `shred -u key key.pub`.
 
 A deploy key rather than a personal access token because it is read-only and
-scoped to one repository, so it cannot write to `kurenn/ferry` and cannot see
+scoped to one repository, so it cannot write to `coba-ai/ferry` and cannot see
 anything else the operator can (`A424`).
 
 Until then the suite is runnable locally only — `FERRY_E2E_RAILS_DIR=../ferry
@@ -81,10 +81,10 @@ cat >&2 <<'MESSAGE'
 The end-to-end suite did not run, and this job fails to say so.
 
 FERRY_API_REPO_SSH_KEY is not configured. AC61-AC63 drive the CLI against a
-running FERRY, that app is in the private kurenn/ferry (A400), and GITHUB_TOKEN
+running FERRY, that app is in the private coba-ai/ferry (A400), and GITHUB_TOKEN
 cannot check out another repository.
 
-An operator must add a read-only deploy key for kurenn/ferry as the secret
+An operator must add a read-only deploy key for coba-ai/ferry as the secret
 FERRY_API_REPO_SSH_KEY; the job summary has the four commands. Until then, run
 the suite locally:
 

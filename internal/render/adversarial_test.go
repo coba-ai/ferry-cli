@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/harness"
-	"github.com/kurenn/ferry-cli/internal/noun"
-	"github.com/kurenn/ferry-cli/internal/render"
+	"github.com/coba-ai/ferry-cli/internal/harness"
+	"github.com/coba-ai/ferry-cli/internal/noun"
+	"github.com/coba-ai/ferry-cli/internal/render"
 )
 
 // The adversarial pass for AC42: what makes a secret reach a place AC42 says

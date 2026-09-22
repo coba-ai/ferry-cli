@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kurenn/ferry-cli/internal/creds"
+	"github.com/coba-ai/ferry-cli/internal/creds"
 )
 
 // StatusUnrecorded is what the fixture answers a request no loaded recording

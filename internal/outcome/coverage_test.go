@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // AC19. The table covers every code in `docs/api/errors.md` for each of the

@@ -77,7 +77,7 @@ jobs:
   # before a Postgres is started for nothing.
   #
   # A400 moved the CLI into this repository and left the Rails app it drives in
-  # kurenn/ferry, which is private. A job here cannot check that out with
+  # coba-ai/ferry, which is private. A job here cannot check that out with
   # `GITHUB_TOKEN`: the token is scoped to this repository. So AC61–AC63 need a
   # cross-repository token, and until one exists there is no e2e coverage in CI.
   #
@@ -95,7 +95,7 @@ jobs:
   # cost was that CI stayed red until an operator added the secret, and that
   # cost was the point: one action by one person, against silence.
   #
-  # The secret now exists — a read-only deploy key on kurenn/ferry (A424) — so
+  # The secret now exists — a read-only deploy key on coba-ai/ferry (A424) — so
   # the gate passes. It is kept rather than deleted because the reason for it
   # outlives its first use: a rotated or revoked key makes this red again,
   # where deleting the gate would make the e2e job fail on checkout with a
@@ -170,13 +170,13 @@ jobs:
 
       # A read-only deploy key, not a token (A424). `ssh-key` makes checkout
       # clone over SSH with this key alone, so the credential in play here
-      # cannot write to kurenn/ferry and cannot reach any other repository —
+      # cannot write to coba-ai/ferry and cannot reach any other repository —
       # which a personal access token, even fine-grained, is only promising
       # not to do.
       - name: Checkout the API
         uses: actions/checkout@v7
         with:
-          repository: kurenn/ferry
+          repository: coba-ai/ferry
           ssh-key: ${{ secrets.FERRY_API_REPO_SSH_KEY }}
           path: api
 
@@ -223,7 +223,7 @@ jobs:
   #
   # AC60 asks the API repository's `test` job for `git diff --exit-code
   # cli/testdata/recorded`. A400 moved the CLI out, and that step now lives in
-  # kurenn/ferry as `git diff --exit-code contract/recorded` — verified present.
+  # coba-ai/ferry as `git diff --exit-code contract/recorded` — verified present.
   # It checks that the *generator* is deterministic. It cannot check that this
   # repository's vendored copy is current, which needs CI in that repository to
   # read this one. Recorded as A410 and A412, both Open.

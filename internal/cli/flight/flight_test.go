@@ -9,8 +9,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/kurenn/ferry-cli/internal/cli/flight"
-	"github.com/kurenn/ferry-cli/internal/outcome"
+	"github.com/coba-ai/ferry-cli/internal/cli/flight"
+	"github.com/coba-ai/ferry-cli/internal/outcome"
 )
 
 // C17: the flag is monotonic.
