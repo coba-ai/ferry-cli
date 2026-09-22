@@ -1,0 +1,71 @@
+name: Release
+
+# AC65 and PLAN §5.15 say `cli/v*`. This is `v*`, and amendment A417 records why.
+#
+# The prefix dates from when the CLI shared a repository with the API, where a
+# bare `v*` would have been ambiguous. A400 split them, which made the prefix
+# unnecessary — and goreleaser makes it unworkable. Measured, with a real tag:
+# goreleaser reads the whole of `cli/v0.4.2` as the version, so the archives are
+# written as `dist/ferry_cli/v0.4.2_linux_amd64.tar.gz` — the slash becomes a
+# directory, and the release asset is named `v0.4.2_linux_amd64.tar.gz` — the
+# Homebrew cask is stamped `version "cli/v0.4.2"`, and `ferry version` prints
+# `ferry cli/v0.4.2`. The archive names and the ldflags stamp could be patched
+# with `trimprefix`; the cask's version cannot, because `homebrew_casks` has no
+# version field and prefix stripping for monorepo tags is a goreleaser Pro
+# feature. So `cli/v*` cannot produce a working cask at all.
+#
+# No tag of either shape has ever been pushed to this repository, so nothing is
+# being broken by the change.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # goreleaser needs the tag history to work out the version and the
+          # changelog; a shallow clone has neither.
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      # The digest `ferry version` prints and the User-Agent carries (§5.15).
+      # Computed here, from the tree being released, and referenced with no
+      # default in .goreleaser.yaml — so a release that somehow lost this step
+      # fails rather than shipping a binary that says `contract unknown`.
+      - name: Compute the contract digest
+        run: |
+          echo "CONTRACT_SHA256=$(sha256sum contract/openapi.yaml | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+      - name: Release
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --clean
+        env:
+          # This one is GitHub's own and needs no operator action: `contents:
+          # write` above is what creates the release in this repository.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # This one does. It pushes Formula/ferry.rb to kurenn/homebrew-tap,
+          # which is a different repository, and GITHUB_TOKEN cannot write
+          # there. The tap exists; the secret is what is missing, and without it
+          # goreleaser fails the `brews` step after having already published the
+          # GitHub Release — a half-done release, which is why README.md
+          # "Releasing" lists this as a prerequisite rather than a nicety.
+          # Recorded as A414.
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
