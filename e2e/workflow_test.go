@@ -71,6 +71,12 @@ type job struct {
 		Name string `yaml:"name"`
 		Uses string `yaml:"uses"`
 		Run  string `yaml:"run"`
+
+		// With is read as plain strings rather than a typed shape,
+		// because the only thing asserted about it is which credential
+		// key is present — and a typed shape would have to enumerate
+		// every input actions/checkout accepts in order to say that.
+		With map[string]string `yaml:"with"`
 	} `yaml:"steps"`
 }
 
@@ -276,9 +282,9 @@ func TestTheEndToEndJobIsGatedOnThePreflightScript(t *testing.T) {
 		t.Fatalf("%s has no `cli-e2e` job (AC60)", ciWorkflow)
 	}
 
-	if want := "needs.cli-e2e-preflight.outputs.token == 'yes'"; e2e.If != want {
+	if want := "needs.cli-e2e-preflight.outputs.credential == 'yes'"; e2e.If != want {
 		t.Errorf("the cli-e2e job's condition is %q, want exactly %q. A condition that does not "+
-			"read the preflight's output either runs without a token or never runs at all",
+			"read the preflight's output either runs without a credential or never runs at all",
 			e2e.If, want)
 	}
 
@@ -422,19 +428,24 @@ func TestTheShellScriptsAreExecutable(t *testing.T) {
 // a claim.
 //
 // Both branches, because the interesting failures are opposite: a gate that
-// always answers `yes` runs the e2e job without a token and it fails on
+// always answers `yes` runs the e2e job without a credential and it fails on
 // checkout; a gate that always answers `no` never runs it again and CI is red
 // forever with nobody able to fix it. Each branch reads the answer *and* the
 // exit code, since those are two decisions the script makes separately.
 func TestThePreflightScriptAnswersBothWays(t *testing.T) {
 	for _, tc := range []struct {
-		name     string
-		token    string
-		want     string
-		exitCode int
+		name       string
+		credential string
+		want       string
+		exitCode   int
 	}{
-		{name: "with a token", token: "ghp_notarealtoken", want: "token=yes", exitCode: 0},
-		{name: "without one", token: "", want: "token=no", exitCode: 1},
+		// Any non-empty value: the script asks whether a credential was
+		// configured, not whether it is a usable key. Checking the shape
+		// here would be a second, weaker copy of what the SSH client
+		// enforces a step later, and it would answer `no` to a valid key
+		// in a format this script had not been taught.
+		{name: "with a key", credential: "-----BEGIN OPENSSH PRIVATE KEY-----\nnot-a-real-key\n", want: "credential=yes", exitCode: 0},
+		{name: "without one", credential: "", want: "credential=no", exitCode: 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
@@ -448,7 +459,7 @@ func TestThePreflightScriptAnswersBothWays(t *testing.T) {
 
 			cmd := exec.Command(script)
 			cmd.Env = append(os.Environ(),
-				"FERRY_API_REPO_TOKEN="+tc.token,
+				"FERRY_API_REPO_SSH_KEY="+tc.credential,
 				"GITHUB_OUTPUT="+outputFile,
 				"GITHUB_STEP_SUMMARY="+summaryFile,
 			)
@@ -499,7 +510,7 @@ func TestThePreflightRefusalNamesTheSecretAndTheLocalAlternative(t *testing.T) {
 		"GITHUB_OUTPUT="+filepath.Join(dir, "output"),
 		"GITHUB_STEP_SUMMARY="+summaryFile,
 	)
-	cmd.Env = append(cmd.Env, "FERRY_API_REPO_TOKEN=")
+	cmd.Env = append(cmd.Env, "FERRY_API_REPO_SSH_KEY=")
 
 	combined, _ := cmd.CombinedOutput()
 
@@ -511,7 +522,9 @@ func TestThePreflightRefusalNamesTheSecretAndTheLocalAlternative(t *testing.T) {
 	said := string(combined) + string(summary)
 
 	for what, needle := range map[string]string{
-		"name the secret an operator must add": "FERRY_API_REPO_TOKEN",
+		"name the secret an operator must add": "FERRY_API_REPO_SSH_KEY",
+		"say how to make the key":              "ssh-keygen",
+		"say the key must be read-only":        "read-only",
 		"name the repository it reads":         "kurenn/ferry",
 		"say the suite can be run locally":     "e2e/run.sh",
 		"say which criteria are unenforced":    "AC61",
@@ -554,5 +567,60 @@ func toString(v any) string {
 		return strings.Join(parts, ",")
 	default:
 		return ""
+	}
+}
+
+// The API is checked out with the deploy key, and with nothing broader (A424).
+//
+// The reason to prefer a deploy key over a fine-grained personal access token
+// is the blast radius: read-only, and scoped to the one repository, so the
+// credential in play during an e2e run cannot write to `kurenn/ferry` and
+// cannot reach anything else its creator can see. A token is only *promising*
+// not to do those things, and the promise is invisible from here — the
+// workflow looks identical either way.
+//
+// So the choice needs a pin, or the next edit to this job can paste
+// `token: ${{ secrets.SOMETHING }}` back in and nothing is red. That edit is
+// plausible rather than hypothetical: `token:` is what every example of
+// cross-repository checkout on the internet shows, because most of them are
+// not checking out a private sibling from a repository that also publishes
+// release artefacts.
+func TestTheAPIIsCheckedOutWithTheDeployKeyAndNothingBroader(t *testing.T) {
+	ci := loadWorkflow(t, ciWorkflow)
+
+	e2e, ok := ci.Jobs["cli-e2e"]
+	if !ok {
+		t.Fatalf("%s has no `cli-e2e` job", ciWorkflow)
+	}
+
+	var found bool
+
+	for _, step := range e2e.Steps {
+		if step.With["repository"] != "kurenn/ferry" {
+			continue
+		}
+
+		found = true
+
+		if key := step.With["ssh-key"]; !strings.Contains(key, "FERRY_API_REPO_SSH_KEY") {
+			t.Errorf("the API checkout's ssh-key is %q, want the FERRY_API_REPO_SSH_KEY secret. "+
+				"The preflight gates on that name, so a checkout reading a different one "+
+				"runs green with the gate measuring nothing.", key)
+		}
+
+		if token, present := step.With["token"]; present {
+			t.Errorf("the API checkout passes token: %q. A deploy key is read-only and scoped "+
+				"to one repository; a token is scoped to whatever it was minted with, and "+
+				"this job also has the release credentials in reach. If the key stopped "+
+				"working, rotate the key — do not widen the credential.", token)
+		}
+	}
+
+	// The floor. Without it this passes over a job that stopped checking out
+	// the API at all, which is the state in which the e2e suite cannot run.
+	if !found {
+		t.Fatalf("no step in `cli-e2e` checks out kurenn/ferry, so either the suite no longer "+
+			"drives a real app or this reader has stopped parsing `with:` — and both of "+
+			"those make every other assertion in %s about the e2e job vacuous", ciWorkflow)
 	}
 }
