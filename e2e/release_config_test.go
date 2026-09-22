@@ -43,6 +43,7 @@ var stampedVariables = []string{
 const (
 	goModFile    = "../go.mod"
 	e2eRunScript = "run.sh"
+	readmeFile   = "../README.md"
 )
 
 var moduleLine = regexp.MustCompile(`(?m)^module\s+(\S+)$`)
@@ -159,7 +160,37 @@ func TestEveryVersionStampNamesTheModulePathGoModDeclares(t *testing.T) {
 		t.Errorf("the cask's homepage is %q, want %q — the module %s declares",
 			cask.Homepage, "https://"+module, goModFile)
 	}
+
+	// The fifth spelling, and the one with the shortest path to a reader
+	// doing something that fails. Until a tag exists, `go install` is the
+	// only way to get the binary, and `go install` resolves the repository
+	// and then checks that go.mod declares the same path — so a README
+	// naming the old owner does not 404, it downloads and then refuses with
+	// a version-constraints conflict. A435 is that failure, measured.
+	readme, err := os.ReadFile(readmeFile)
+	if err != nil {
+		t.Fatalf("read %s: %v", readmeFile, err)
+	}
+
+	installs := goInstallLine.FindAllStringSubmatch(string(readme), -1)
+	if len(installs) == 0 {
+		t.Fatalf("%s documents no `go install` line, so this check is vacuous. It is the only "+
+			"install path that works before a tag exists, and it is worth documenting",
+			readmeFile)
+	}
+
+	for _, install := range installs {
+		if path := install[1]; path != module+"/cmd/ferry" {
+			t.Errorf("%s tells a reader to `go install %s`, but %s declares the module as %s. "+
+				"That does not fail as a missing repository — the download succeeds through the "+
+				"redirect and the module path check refuses afterwards",
+				readmeFile, path, goModFile, module)
+		}
+	}
 }
+
+// The module path in a documented `go install`, without the version suffix.
+var goInstallLine = regexp.MustCompile(`go install ([^\s@]+)@`)
 
 type goreleaserConfig struct {
 	Before struct {
