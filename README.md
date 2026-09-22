@@ -9,6 +9,18 @@ been pushed, so there is nothing to `brew install` yet. Every command is wired �
 `auth`, `keys`, `corridors`, `transfers`, `runs`, `commands` — and the
 end-to-end suite runs the money path against a real Rails app.
 
+There is an install path in the meantime, because this repository is public and
+declares its own module path:
+
+    go install github.com/coba-ai/ferry-cli/cmd/ferry@latest
+
+What that gets you is an honest binary rather than a released one. `ferry
+version` prints `0.0.0-dev` and `contract unknown`, because the version and the
+contract digest are stamped by the release workflow's linker flags and `go
+install` does not pass them. That is the designed answer — an unstamped build
+says so rather than claiming a version — but it means the binary cannot tell you
+which contract it was built against, so prefer a release once one exists.
+
 Nothing in this repository has spoken to Polygon. Every test runs against
 recorded interactions or a local Rails app backed by a fixture, because the
 sandbox credentials are still outstanding.
