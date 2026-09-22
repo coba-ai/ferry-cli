@@ -92,29 +92,35 @@ jobs:
   #     green forever, and nothing records that AC61–AC63 are unenforced.
   #
   # A red check is the only form of this that cannot be read as coverage. The
-  # cost is that CI is red until an operator adds the secret, and that cost is
-  # the point: it is one action by one person (README.md, "Running the
-  # end-to-end suite"), and the alternative is silence. Recorded as A411.
+  # cost was that CI stayed red until an operator added the secret, and that
+  # cost was the point: one action by one person, against silence.
+  #
+  # The secret now exists — a read-only deploy key on kurenn/ferry (A424) — so
+  # the gate passes. It is kept rather than deleted because the reason for it
+  # outlives its first use: a rotated or revoked key makes this red again,
+  # where deleting the gate would make the e2e job fail on checkout with a
+  # git authentication error, which reads as a broken pipeline rather than a
+  # missing credential. Recorded as A411 and A424.
   cli-e2e-preflight:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     outputs:
-      token: ${{ steps.gate.outputs.token }}
+      credential: ${{ steps.gate.outputs.credential }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Is a cross-repository token configured?
+      - name: Is a cross-repository credential configured?
         id: gate
         env:
-          FERRY_API_REPO_TOKEN: ${{ secrets.FERRY_API_REPO_TOKEN }}
+          FERRY_API_REPO_SSH_KEY: ${{ secrets.FERRY_API_REPO_SSH_KEY }}
         run: e2e/ci-preflight.sh
 
   cli-e2e:
     needs: cli-e2e-preflight
-    if: needs.cli-e2e-preflight.outputs.token == 'yes'
+    if: needs.cli-e2e-preflight.outputs.credential == 'yes'
 
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -162,11 +168,16 @@ jobs:
       - name: Checkout the CLI
         uses: actions/checkout@v7
 
+      # A read-only deploy key, not a token (A424). `ssh-key` makes checkout
+      # clone over SSH with this key alone, so the credential in play here
+      # cannot write to kurenn/ferry and cannot reach any other repository —
+      # which a personal access token, even fine-grained, is only promising
+      # not to do.
       - name: Checkout the API
         uses: actions/checkout@v7
         with:
           repository: kurenn/ferry
-          token: ${{ secrets.FERRY_API_REPO_TOKEN }}
+          ssh-key: ${{ secrets.FERRY_API_REPO_SSH_KEY }}
           path: api
 
       # db/structure.sql is dumped by pg_dump 18 and the runner image ships an
@@ -182,11 +193,16 @@ jobs:
           sudo apt-get install -y --no-install-recommends postgresql-client-18
           echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
 
+      # `ruby-version` is a version spec, not a path: `.ruby-version` is a
+      # special value meaning "read the file", and it is resolved against
+      # `working-directory`. Prefixing it with `api/` made setup-ruby parse
+      # `api/.ruby` as an engine name and fail (A425) — the API repository's
+      # own CI has always passed the bare value.
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-          ruby-version: api/.ruby-version
+          ruby-version: .ruby-version
           working-directory: api
 
       - name: Set up Go

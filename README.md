@@ -45,19 +45,28 @@ Every file matches exactly one prefix in `OWNERSHIP`, checked by
 Needs a Postgres 18, a Redis and a checkout of the API repository. Full
 instructions, including the two `docker run` lines, are in `e2e/README.md`.
 
-**CI does not run this suite, and its `cli-e2e-preflight` job fails to say so.**
-A400 moved the CLI into this repository and left the Rails app it drives in
-`kurenn/ferry`, which is private; `GITHUB_TOKEN` is scoped to one repository, so
-a job here cannot check that one out. The job fails rather than skipping because
-a skipped job renders grey in the PR check list and reads as a completed check —
-coverage that is not coverage. To make it pass, an operator with access to both
-repositories must:
+**CI runs this suite via a read-only deploy key.** A400 moved the CLI into this
+repository and left the Rails app it drives in `kurenn/ferry`, which is private;
+`GITHUB_TOKEN` is scoped to one repository, so a job here cannot check that one
+out. The credential is a deploy key rather than a personal access token because
+it is read-only and scoped to that single repository: it cannot write to
+`kurenn/ferry` and cannot reach anything else its creator can see, which a
+fine-grained token is only promising not to do.
 
-1. create a fine-grained personal access token with `Contents: read` on
-   `kurenn/ferry` and nothing else, and
-2. add it to this repository as the Actions secret `FERRY_API_REPO_TOKEN`.
+If the key is ever rotated or revoked, `cli-e2e-preflight` goes red rather than
+quietly dropping AC61–AC63 — a skipped job renders grey in the PR check list and
+reads as a completed check, which is coverage that is not coverage. To restore
+it, an operator with access to both repositories runs:
 
-Recorded as amendment A411.
+    ssh-keygen -t ed25519 -N '' -C 'ferry-cli CI' -f ./key
+    gh repo deploy-key add key.pub --repo kurenn/ferry   # read-only
+    gh secret set FERRY_API_REPO_SSH_KEY --repo kurenn/ferry-cli < key
+    shred -u key key.pub
+
+The last line matters: the private half should exist in exactly one place, which
+is this repository's Actions secrets.
+
+Recorded as amendments A411 and A424.
 
 ## Releasing
 
