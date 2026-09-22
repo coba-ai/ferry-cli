@@ -174,9 +174,20 @@ func TestResumeRefusesAChangedCredential(t *testing.T) {
 		args: []string{"runs", "resume", id, "--yes"},
 	})
 
-	// M104.
-	if exit == 0 {
-		t.Fatalf("the resume succeeded under a different principal\n%s\n%s", stdout, stderr)
+	// M77, and A370.
+	//
+	// The exit code is asserted, not merely required to be non-zero. AC70
+	// and §7.1 A19 both say **7**, and 7 is not decoration: `escalate`
+	// answers `money: unknown` and `same key safe: no`, while `cli_fault`
+	// — exit 1, the code this refusal would otherwise fall to — answers
+	// `money: no` and `same key safe: yes`. The run being resumed is
+	// `pending`, so "money did not move" is exactly the claim nobody can
+	// make about it. `if exit == 0` admitted 1, and the mutation that
+	// produces 1 was green against the whole suite.
+	if exit != 7 {
+		t.Fatalf("exit = %d, want 7: a resume refused because the credential changed is an "+
+			"escalation over a run whose outcome is unknown, not a local fault over one "+
+			"that never left\n%s\n%s", exit, stdout, stderr)
 	}
 
 	if got := requestsTo(server, executePath); got != before {
@@ -195,6 +206,92 @@ func TestResumeRefusesAChangedCredential(t *testing.T) {
 	}
 
 	// The step is untouched, so switching back and resuming still works.
+	if state := stepOf(t, home, runs.StepExecute).State; state != runs.StatePending {
+		t.Errorf("execute step is %s, want pending", state)
+	}
+}
+
+// C19/AC70's **other arm**, which nothing asserted (A370).
+//
+// `checkCredential` compares two things, in order: the stored token's prefix,
+// then the principal id. AC70 says "the profile's `token_prefix` **or**
+// `principal_id` differs", and the test above drives the second arm only — it
+// keeps the token and changes the principal. Deleting the token-prefix arm
+// outright left `go test -tags faultinject ./...` entirely green, so half of
+// the invariant that keeps one principal's transfer from being sent under
+// another's key was carried by no example at all.
+//
+// The arm is not redundant with the one below it. The principal comparison is
+// guarded by `match.Credential.PrincipalID != ""`, so a stored credential with
+// no principal id — which `creds.Put` is perfectly willing to write, and which
+// any caller that stores a token without reading `GET /v1/me` produces — skips
+// it entirely. For those profiles the prefix comparison is the only guard
+// there is.
+//
+// So this changes the token and holds the principal id fixed, which is the
+// arrangement the sibling test cannot reach.
+func TestResumeRefusesACredentialWhoseTokenPrefixChanged(t *testing.T) {
+	server, home := loggedIn(t, "execute.201.processing", "execute.replay.201")
+
+	id := pendingRun(t, home)
+
+	before := requestsTo(server, executePath)
+
+	// A second sandbox API key: same class, same environment, same
+	// principal — so neither the pre-check, the `--env` assertion nor the
+	// principal arm can account for the refusal. `creds.Put` recomputes
+	// `token_prefix` from the token it is given, so changing the token is
+	// what changes the prefix.
+	replacement := "ferry_sk_sandbox_" + padded(t, "ROTATEDSK")
+
+	if creds.Prefix(replacement) == creds.Prefix(canaryKey(t)) {
+		t.Fatalf("the replacement token has the same prefix as the original (%s), so this "+
+			"test cannot distinguish the arm it is about", creds.Prefix(replacement))
+	}
+
+	store := creds.NewStore(fsx.OS(), filepath.Join(home, "credentials.json"))
+
+	file, err := store.Load()
+	if err != nil {
+		t.Fatalf("load credentials: %v", err)
+	}
+
+	err = file.Put(creds.DefaultProfile, server.URL(), creds.Credential{
+		Token:       replacement,
+		PrincipalID: principal,
+	})
+	if err != nil {
+		t.Fatalf("put the replacement credential: %v", err)
+	}
+
+	if err := store.Save(file); err != nil {
+		t.Fatalf("save credentials: %v", err)
+	}
+
+	stdout, stderr, exit := run(t, invocation{
+		home: home,
+		args: []string{"runs", "resume", id, "--yes"},
+	})
+
+	if exit != 7 {
+		t.Fatalf("exit = %d, want 7\n%s\n%s", exit, stdout, stderr)
+	}
+
+	if got := requestsTo(server, executePath); got != before {
+		t.Errorf("execute requests went from %d to %d; a rotated key must not resend a "+
+			"transfer the key it replaced may already have sent", before, got)
+	}
+
+	report := stdout + stderr
+
+	// Both prefixes, for the same reason the sibling names both principals:
+	// the caller has to know which credential to put back.
+	for _, want := range []string{creds.Prefix(canaryKey(t)), creds.Prefix(replacement)} {
+		if !strings.Contains(report, want) {
+			t.Errorf("the refusal does not mention %q\n%s", want, report)
+		}
+	}
+
 	if state := stepOf(t, home, runs.StepExecute).State; state != runs.StatePending {
 		t.Errorf("execute step is %s, want pending", state)
 	}

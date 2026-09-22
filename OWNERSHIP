@@ -40,7 +40,14 @@ units:
       # plan, which moved with the code. They are repository scaffolding, so
       # they sit with the rest of it.
       - contract/
-      - docs/
+      # A370: docs/ was a subtree here until U7 needed to put two documents
+      # of its own in it. Prefixes must not overlap, so a subtree prefix
+      # cannot be shared — the two files are named below and U7 names its
+      # two. The cost is that a new document under docs/ is unowned until
+      # somebody assigns it, which is the lint doing its job rather than a
+      # regression: §4.1 gives docs/ to no unit collectively.
+      - docs/PLAN.md
+      - docs/CRITIQUE.md
       - internal/version/
       - internal/ulid/
       - internal/xdg/
@@ -97,6 +104,11 @@ units:
     description: Adversarial matrix, audit, documentation
     paths:
       - internal/adversarial_test.go
+      # A400 moved these out of the API repository's docs/loops/cli/, which
+      # A401 deleted in favour of a README pointing here. AC68's audit and
+      # AC89's still-present-defect list are U7's own record.
+      - docs/MUTATIONS.md
+      - docs/DOC-DEFECTS.md
 
   # U8 owns only Ruby files, outside cli/. It is listed so the test can check
   # the unit names here against §4.1 in both directions.
